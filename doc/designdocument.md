@@ -2,7 +2,7 @@
 
 ## Systeme in der Reihenfolge der Implementierung
 1. GameManager - Erstellt und verbindet alle Systeme
-2. Game Loop - orchestriert einen Frame (Input -> Logik -> Render)
+2. Game Loop - orchestriert einen Frame (Input -> Logik -> Render). Keine Entscheidungsgewalt
 3. AssetManager - lädt und cached alle Texturen einmal beim Start
 4. Renderer - flusht die RenderQueue jedes Frame (reine Darstellung)
 5. SceneManager - verwaltet die aktive Szene
@@ -11,18 +11,6 @@
 8. InputSystem - verarbeitet Maus und Tastatur
 9. SudokuGenerator - generiert ein gültiges Puzzle
 10. SudokuSolver - löst ein Brett, Werkzeug des Generators (und des Auto-Complete)
-
-## Zellen Struct 
-Die grundlegende Datensruktur für eine einzelne Zelle des Boards.
-
-```
-struct Cell
-{
-    int number;
-    std::set<int> note;
-    bool canEdit;
-}
-```
 
 ## Ablauf eines Frames
 1. Input
@@ -58,3 +46,22 @@ Jegliche Auswahl soll über die Tastatur passieren.
 Das bedeutet, dass feste Punkte auf dem Bildschirm definiert sind, die eine 
 Auswahl ermöglichen.
 Der Cursor springt dann zwischen diesen Punkten hin und her.
+
+## Implementierungsdetails
+### Zellen Struct 
+Die grundlegende Datensruktur für eine einzelne Zelle des Boards.
+
+```
+struct Cell
+{
+    int number;
+    std::set<int> note;
+    bool canEdit;
+}
+```
+
+### Zeichnen der GameScene
+Das Spielfeld wird jedes Frame gezeichnet.
+Es ist ein Rahmen mit vertikalen und horizontalen Linien.
+Die Texturen für die Zellen werden dann bei Bedarf über das Spielfeld gezeichnet.
+Das betrifft die Zellen, die eine Zahl beinhalten.
