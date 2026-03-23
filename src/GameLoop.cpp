@@ -2,17 +2,15 @@
 
 #include "IUpdatable.h"
 
-#include <optional>
-
-GameLoop::GameLoop(IUpdatable* updatable)
+GameLoop::GameLoop(IUpdatable* updatable, bool* running)
+	: m_updatable(updatable), m_running(*running)
 {
-	m_updatable = updatable;
 	m_window = sf::RenderWindow(sf::VideoMode({ 200, 200 }), "SFML works!");
 }
 
 void GameLoop::Run()
 {
-	while (m_window.isOpen())
+	while (m_window.isOpen() && m_running)
 	{
 		Input();
 		m_updatable->Update();

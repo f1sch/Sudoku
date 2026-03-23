@@ -131,6 +131,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GameScene.cpp" />
+    <ClCompile Include="src\SceneManager.cpp" />
     <ClCompile Include="src\GameManager.cpp" />
     <ClCompile Include="src\GameLoop.cpp" />
     <ClCompile Include="src\IUpdatable.h" />
@@ -140,8 +142,11 @@
     <None Include=".github\workflows\ci.yml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\GameScene.h" />
+    <ClInclude Include="src\SceneManager.h" />
     <ClInclude Include="src\GameManager.h" />
     <ClInclude Include="src\GameLoop.h" />
+    <ClInclude Include="src\IInputListener.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
