@@ -1,12 +1,24 @@
 #pragma once
-#include "IUpdatable.h"
+#include "IScene.h"
 
-class GameScene : public IUpdatable
+#include <SFML/Graphics/Drawable.hpp>
+#include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics/Texture.hpp>
+
+#include <vector>
+
+class AssetManager;
+
+class GameScene : public IScene
 {
 public:
-	GameScene();
+	GameScene(AssetManager& am);
 
 	void Update() override;
 	void Render() override;
+	void Render(std::vector<const sf::Drawable*>& queue) override;
+private:
+	const sf::Texture testTex;
+	sf::Sprite m_testSprite;
 };
 

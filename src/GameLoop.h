@@ -1,5 +1,4 @@
 #pragma once
-
 #include <SFML/Graphics/RenderWindow.hpp>
 
 class IUpdatable;
@@ -7,7 +6,7 @@ class IUpdatable;
 class GameLoop
 {
 public:
-	GameLoop(IUpdatable* updatable, bool* running);
+	GameLoop(IUpdatable* updatable, bool* running, sf::RenderWindow& window);
 
 	void Run();
 private:
@@ -15,6 +14,6 @@ private:
 
 	IUpdatable* m_updatable;
 	bool& m_running;
-	sf::RenderWindow m_window;
+	sf::RenderWindow& m_window;
 };
 

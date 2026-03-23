@@ -3,9 +3,9 @@
 ## Systeme in der Reihenfolge der Implementierung
 1. GameManager - Erstellt und verbindet alle Systeme
 2. Game Loop - orchestriert einen Frame (Input -> Logik -> Render). Keine Entscheidungsgewalt
+5. SceneManager - verwaltet die aktive Szene
 3. AssetManager - lädt und cached alle Texturen einmal beim Start
 4. Renderer - flusht die RenderQueue jedes Frame (reine Darstellung)
-5. SceneManager - verwaltet die aktive Szene
 6. GridSystem - definiert Bildschirmkoordinaten für Zellen
 7. Board - Daten und Spiellogik
 8. InputSystem - verarbeitet Maus und Tastatur

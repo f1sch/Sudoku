@@ -2,10 +2,12 @@
 
 #include "IUpdatable.h"
 
-GameLoop::GameLoop(IUpdatable* updatable, bool* running)
-	: m_updatable(updatable), m_running(*running)
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Window/Event.hpp>
+
+GameLoop::GameLoop(IUpdatable* updatable, bool* running, sf::RenderWindow& window)
+	: m_updatable(updatable), m_running(*running), m_window(window)
 {
-	m_window = sf::RenderWindow(sf::VideoMode({ 200, 200 }), "SFML works!");
 }
 
 void GameLoop::Run()

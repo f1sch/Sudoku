@@ -1,11 +1,16 @@
 #include "SceneManager.h"
+
 #include "GameScene.h"
 
-#include <memory>
+#include <SFML/Graphics/Drawable.hpp>
+#include <SFML/Window/Keyboard.hpp>
 
-SceneManager::SceneManager()
+#include <memory>
+#include <vector>
+
+SceneManager::SceneManager(AssetManager& am)
 {
-	m_scene = std::make_unique<GameScene>();
+	m_scene = std::make_unique<GameScene>(am);
 }
 
 void SceneManager::OnKeyPressed(sf::Keyboard::Key key)
@@ -19,6 +24,10 @@ void SceneManager::Update()
 
 void SceneManager::Render()
 {
+}
+
+void SceneManager::Render(std::vector<const sf::Drawable*>& queue)
+{
 	// Fill RenderQueue with Objects
-	m_scene->Render();
+	m_scene->Render(queue);
 }

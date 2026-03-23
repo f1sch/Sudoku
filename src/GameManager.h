@@ -2,15 +2,20 @@
 #include "IUpdatable.h"
 #include "IInputListener.h"
 
-#include "GameLoop.h"
-#include "SceneManager.h"
+#include <SFML/Window/Keyboard.hpp>
 
 #include <memory>
+
+class AssetManager;
+class GameLoop;
+class Renderer;
+class SceneManager;
 
 class GameManager : public IUpdatable, public IInputListener
 {
 public:
 	GameManager();
+	~GameManager();
 
 	void Run();
 	void OnKeyPressed(sf::Keyboard::Key key) override;
@@ -20,6 +25,8 @@ private:
 
 	std::unique_ptr<GameLoop> m_gameLoop;
 	std::unique_ptr<SceneManager> m_sceneManager;
+	std::unique_ptr<AssetManager> m_assetManager;
+	std::unique_ptr<Renderer> m_renderer;
 
 	bool m_running;
 };

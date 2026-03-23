@@ -131,7 +131,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\AssetManager.cpp" />
     <ClCompile Include="src\GameScene.cpp" />
+    <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\SceneManager.cpp" />
     <ClCompile Include="src\GameManager.cpp" />
     <ClCompile Include="src\GameLoop.cpp" />
@@ -142,7 +144,10 @@
     <None Include=".github\workflows\ci.yml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\AssetManager.h" />
     <ClInclude Include="src\GameScene.h" />
+    <ClInclude Include="src\IScene.h" />
+    <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\SceneManager.h" />
     <ClInclude Include="src\GameManager.h" />
     <ClInclude Include="src\GameLoop.h" />
