@@ -12,7 +12,9 @@ FetchContent_Declare(SFML
     SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-add_executable(Sudoku src/main.cpp)
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
+
+add_executable(Sudoku ${SOURCES})
 
 target_compile_features(Sudoku PRIVATE cxx_std_17)
 target_link_libraries(Sudoku PRIVATE SFML::Graphics)
