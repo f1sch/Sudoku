@@ -7,7 +7,7 @@
 #include <vector>
 
 GameScene::GameScene(AssetManager& am)
-	: m_testSprite(am.Get(AssetManager::TextureID::Cell1))
+	: m_testSprite(am.Get(AssetManager::TextureID::Board))
 {
 }
 

@@ -17,7 +17,7 @@ GameManager::GameManager()
 	m_gameLoop = std::make_unique<GameLoop>(this, &m_running, m_renderer->GetWindow());
 	
 	m_assetManager = std::make_unique<AssetManager>();
-	m_assetManager->Load(AssetManager::TextureID::Cell1, "D:\\Projects\\cpp\\Sudoku\\doc\\SudokuMockUp.png");
+	m_assetManager->Load(AssetManager::TextureID::Board, "assets/textures/SudokuMockUp.png");
 	
 	m_sceneManager = std::make_unique<SceneManager>(*m_assetManager);
 }

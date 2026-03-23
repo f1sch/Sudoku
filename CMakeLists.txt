@@ -13,7 +13,14 @@ FetchContent_Declare(SFML
 FetchContent_MakeAvailable(SFML)
 
 add_executable(Sudoku src/main.cpp)
+
 target_compile_features(Sudoku PRIVATE cxx_std_17)
 target_link_libraries(Sudoku PRIVATE SFML::Graphics)
+
+add_custom_command(TARGET Sudoku POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets
+    $<TARGET_FILE_DIR:Sudoku>/assets
+)
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Sudoku)
