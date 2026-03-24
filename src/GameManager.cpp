@@ -2,10 +2,12 @@
 
 #include "AssetManager.h"
 #include "GameLoop.h"
+#include "GridSystem.h"
 #include "Renderer.h"
 #include "SceneManager.h"
 
 #include <SFML/Window/Keyboard.hpp>
+#include <SFML/System/Vector2.hpp>
 
 #include <memory>
 
@@ -17,9 +19,14 @@ GameManager::GameManager()
 	m_gameLoop = std::make_unique<GameLoop>(this, &m_running, m_renderer->GetWindow());
 	
 	m_assetManager = std::make_unique<AssetManager>();
+	m_assetManager->Load(AssetManager::TextureID::CellEmpty, "assets/textures/SingleCell.png");
 	m_assetManager->Load(AssetManager::TextureID::Board, "assets/textures/SudokuMockUp.png");
 	
-	m_sceneManager = std::make_unique<SceneManager>(*m_assetManager);
+	sf::Vector2 size = m_renderer->GetWindow().getSize();
+	auto [width, height] = size;
+	m_gridSystem = std::make_unique<GridSystem>(sf::Vector2f(width / 2.f, height / 2.f));
+
+	m_sceneManager = std::make_unique<SceneManager>(*m_assetManager, *m_gridSystem);
 }
 
 GameManager::~GameManager() = default;

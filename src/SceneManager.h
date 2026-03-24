@@ -10,11 +10,12 @@
 #include <vector>
 
 class AssetManager;
+class GridSystem;
 
 class SceneManager : public IInputListener, public IUpdatable
 {
 public:
-	SceneManager(AssetManager& am);
+	SceneManager(AssetManager& am, GridSystem& gs);
 
 	void OnKeyPressed(sf::Keyboard::Key key) override;
 	void Update() override;

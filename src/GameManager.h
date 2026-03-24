@@ -10,6 +10,7 @@ class AssetManager;
 class GameLoop;
 class Renderer;
 class SceneManager;
+class GridSystem;
 
 class GameManager : public IUpdatable, public IInputListener
 {
@@ -27,6 +28,7 @@ private:
 	std::unique_ptr<SceneManager> m_sceneManager;
 	std::unique_ptr<AssetManager> m_assetManager;
 	std::unique_ptr<Renderer> m_renderer;
+	std::unique_ptr<GridSystem> m_gridSystem;
 
 	bool m_running;
 };

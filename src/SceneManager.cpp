@@ -8,9 +8,9 @@
 #include <memory>
 #include <vector>
 
-SceneManager::SceneManager(AssetManager& am)
+SceneManager::SceneManager(AssetManager& am, GridSystem& gs)
 {
-	m_scene = std::make_unique<GameScene>(am);
+	m_scene = std::make_unique<GameScene>(am, gs);
 }
 
 void SceneManager::OnKeyPressed(sf::Keyboard::Key key)
