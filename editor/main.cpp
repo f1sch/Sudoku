@@ -1,14 +1,15 @@
 #include <SFML/Graphics/Color.hpp>
+#include <SFML/Graphics/PrimitiveType.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
-#include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/RenderTexture.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <SFML/Graphics/Vertex.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
-#include <SFML/Window/Mouse.hpp>
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/Window/WindowEnums.hpp>
 
@@ -16,29 +17,31 @@
 #include <imgui-SFML.h>
 
 #include <algorithm>
+#include <cmath>
+#include <cstdio>
 #include <filesystem>
 #include <memory>
 #include <numeric>
 #include <string>
 #include <vector>
-#include <array>
-#include <SFML/Graphics/Vertex.hpp>
 
 namespace fs = std::filesystem;
 
 constexpr unsigned TILE_SIZE = 32u;
-
-constexpr unsigned VIRTUAL_WIDTH = 640u;
-constexpr unsigned VIRTUAL_HEIGHT = 640u;
-
 constexpr unsigned BOARD_TILES = 9u;
 constexpr unsigned BOARD_SIZE = BOARD_TILES * TILE_SIZE;
-constexpr unsigned BOARD_PADDING = (VIRTUAL_WIDTH - BOARD_SIZE) / 2u;
 
-constexpr unsigned BOARD_LEFT = BOARD_PADDING;
-constexpr unsigned BOARD_TOP = BOARD_PADDING;
+constexpr unsigned PADDING_TILES = 5u;
+constexpr unsigned TOTAL_TILES = BOARD_TILES + PADDING_TILES * 2u;
+constexpr unsigned VIRTUAL_WIDTH = TOTAL_TILES * TILE_SIZE;
+constexpr unsigned VIRTUAL_HEIGHT = VIRTUAL_WIDTH;
+
+constexpr unsigned BOARD_LEFT = PADDING_TILES + TILE_SIZE;
+constexpr unsigned BOARD_TOP = PADDING_TILES + TILE_SIZE;
 constexpr unsigned BOARD_RIGHT = BOARD_LEFT + BOARD_SIZE;
 constexpr unsigned BOARD_BOTTOM = BOARD_TOP + BOARD_SIZE;
+
+constexpr float RULER_SIZE = 20.f;
 
 constexpr unsigned EDITOR_PANEL_WIDTH = 700u;
 constexpr unsigned EDITOR_WIDTH = VIRTUAL_WIDTH + EDITOR_PANEL_WIDTH;
@@ -95,9 +98,8 @@ static std::vector<int> sortedByLayer(const SpriteList& sprites)
 
 static sf::Vector2f snapToGrid(sf::Vector2f pos)
 {
-    float x = std::floor(pos.x / static_cast<float>(TILE_SIZE)) * static_cast<float>(TILE_SIZE);
-    float y = std::floor(pos.y / static_cast<float>(TILE_SIZE)) * static_cast<float>(TILE_SIZE);
-    return { x, y };
+    const float ts = static_cast<float>(TILE_SIZE);
+    return { std::floor(pos.x / ts) * ts, std::floor(pos.y / ts) * ts };
 }
 
 static void drawViewportGrid(sf::RenderTexture& rt)
@@ -111,13 +113,15 @@ static void drawViewportGrid(sf::RenderTexture& rt)
     const int midX_i = (width / 2 / tileSize) * tileSize;
     const int midY_i = (height / 2 / tileSize) * tileSize;
 
+    // TODO: refactor drawing center lines in own function
     const sf::Color colGrid(255, 255, 255);
     const sf::Color colCenter(0, 255, 0);
 
     // vertical
     for (int x = 0; x <= width; x += tileSize)
     {
-        sf::Color c = (x == midX_i) ? colCenter : colGrid;
+        //sf::Color c = (x == midX_i) ? colCenter : colGrid;
+        sf::Color c = colGrid;
         float fx = static_cast<float>(x);
         lines.push_back({ sf::Vector2f(fx, 0.f), c });
         lines.push_back({ sf::Vector2f(fx, static_cast<float>(height)), c });
@@ -125,7 +129,8 @@ static void drawViewportGrid(sf::RenderTexture& rt)
     // horizontal
     for (int y = 0; y <= height; y += tileSize)
     {
-        sf::Color c = (y == midY_i) ? colCenter : colGrid;
+        //sf::Color c = (y == midY_i) ? colCenter : colGrid;
+        sf::Color c = colGrid;
         float fy = static_cast<float>(y);
         lines.push_back({ sf::Vector2f(0.f, fy), c });
         lines.push_back({ sf::Vector2f(static_cast<float>(width), fy), c });
@@ -136,26 +141,49 @@ static void drawViewportGrid(sf::RenderTexture& rt)
 
 static void drawBoardBoundary(sf::RenderTexture& rt)
 {
-    const float l = static_cast<float>(BOARD_LEFT);
-    const float t = static_cast<float>(BOARD_TOP);
+    const float x = static_cast<float>((VIRTUAL_WIDTH - BOARD_SIZE) / 2);
+    const float y = static_cast<float>((VIRTUAL_HEIGHT - BOARD_SIZE) / 2);
     const float s = static_cast<float>(BOARD_SIZE);
 
     sf::RectangleShape fill({ s, s });
-    fill.setPosition({ l, t });
+    fill.setPosition({ x, y });
     fill.setFillColor(sf::Color(30, 60, 30, 40));
     fill.setOutlineColor(sf::Color(80, 180, 80, 200));
     fill.setOutlineThickness(1.f);
     rt.draw(fill);
 
-    std::vector<sf::Vertex> cross;
-    constexpr float m = 6.f;
-    sf::Color color(80, 180, 80, 200);
-    cross.push_back({ sf::Vector2f({l - m, t}), color });
-    cross.push_back({ sf::Vector2f({l + m, t}), color });
-    cross.push_back({ sf::Vector2f({l, t - m}), color });
-    cross.push_back({ sf::Vector2f({l, t + m}), color });
+    //std::vector<sf::Vertex> cross;
+    //constexpr float m = 6.f;
+    //sf::Color color(80, 180, 80, 200);
+    //cross.push_back({ sf::Vector2f({l - m, t}), color });
+    //cross.push_back({ sf::Vector2f({l + m, t}), color });
+    //cross.push_back({ sf::Vector2f({l, t - m}), color });
+    //cross.push_back({ sf::Vector2f({l, t + m}), color });
 
-    rt.draw(cross.data(), cross.size(), sf::PrimitiveType::Lines);
+    //rt.draw(cross.data(), cross.size(), sf::PrimitiveType::Lines);
+}
+
+static void drawViewportRuler(ImDrawList* dl, ImVec2 imageOrigin)
+{
+    const float ts = static_cast<float>(TILE_SIZE);
+    const ImU32 colBoard = IM_COL32(100, 200, 100, 255);
+
+    for (int i = 0; i < static_cast<int>(BOARD_TILES); ++i)
+    {
+        float tileCenter = (static_cast<float>(i) + 0.5f) * ts;
+        char  buf[8];
+        snprintf(buf, sizeof(buf), "%d", i);
+
+        ImVec2 textSize = ImGui::CalcTextSize(buf);
+
+        float topX = (imageOrigin.x + tileCenter - textSize.x * 0.5f) + PADDING_TILES * TILE_SIZE;
+        float topY = imageOrigin.y - RULER_SIZE + (RULER_SIZE - textSize.y) * 0.5f;
+        dl->AddText(ImVec2(topX, topY), colBoard, buf);
+
+        float leftX = imageOrigin.x - RULER_SIZE + (RULER_SIZE - textSize.x) * 0.5f;
+        float leftY = (imageOrigin.y + tileCenter - textSize.y * 0.5f) + PADDING_TILES * TILE_SIZE;
+        dl->AddText(ImVec2(leftX, leftY), colBoard, buf);
+    }
 }
 
 static void drawTexturePanel(const std::vector<std::string>& textures, int& selectedTexIdx)
@@ -291,16 +319,23 @@ static ViewportResult drawViewportPanel(const sf::RenderTexture& rt)
 {
     ViewportResult result;
 
-    ImGui::SetNextWindowSize(
-        ImVec2(static_cast<float>(VIRTUAL_WIDTH) + 16.f,
-            static_cast<float>(VIRTUAL_HEIGHT) + 36.f),
-        ImGuiCond_Always);
+    const float windowWidth = static_cast<float>(VIRTUAL_WIDTH) + RULER_SIZE + 16.f;
+    const float windowHeight = static_cast<float>(VIRTUAL_HEIGHT) + RULER_SIZE + 36.f;
+
+    ImGui::SetNextWindowSize(ImVec2(windowWidth, windowHeight),ImGuiCond_Always);
 
     ImGui::Begin("Viewport", nullptr,
-        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
+        ImGuiWindowFlags_NoResize | 
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoMove);
+
+    ImVec2 cursorStart = ImGui::GetCursorPos();
+    ImGui::SetCursorPos(ImVec2(cursorStart.x + RULER_SIZE, cursorStart.y + RULER_SIZE));
 
     ImVec2 imageOrigin = ImGui::GetCursorScreenPos();
     ImGui::Image(rt, sf::Vector2f(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+
+    drawViewportRuler(ImGui::GetWindowDrawList(), imageOrigin);
 
     auto toWorld = [&](ImVec2 mouse) -> sf::Vector2f 
         { 
@@ -309,18 +344,21 @@ static ViewportResult drawViewportPanel(const sf::RenderTexture& rt)
 
     if (ImGui::IsItemHovered())
     {
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        {
-            result.clicked = true;
-            result.worldPos = toWorld(ImGui::GetMousePos());
-        }
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
         {
             ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
             ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
-            result.dragging = true;
+            if (delta.x != 0.f || delta.y != 0.f)
+            {
+                result.dragging = true;
+                result.worldPos = toWorld(ImGui::GetMousePos());
+                result.dragDelta = { delta.x, delta.y };
+            }
+        }
+        else if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            result.clicked = true;
             result.worldPos = toWorld(ImGui::GetMousePos());
-            result.dragDelta = { delta.x, delta.y };
         }
     }
 
@@ -458,8 +496,8 @@ int main()
         if (vp.dragging && mode == EditorMode::Move && selectedSpriteIdx >= 0)
         {
             auto& s = *sprites[selectedSpriteIdx];
-            s.x = vp.dragDelta.x;
-            s.y = vp.dragDelta.y;
+            s.x += vp.dragDelta.x;
+            s.y += vp.dragDelta.y;
 
             if (snapEnabled)
             {
