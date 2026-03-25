@@ -246,8 +246,8 @@ static void drawPropertiesPanel(SpriteList& sprites, int selectedSpriteIdx)
     ImGui::Text("Texture: %s", fs::path(s.texturePath).filename().string().c_str());
     ImGui::Separator();
 
-    int tileX = static_cast<int>(s.x) / static_cast<int>(TILE_SIZE);
-    int tileY = static_cast<int>(s.y) / static_cast<int>(TILE_SIZE);
+    int tileX = static_cast<int>(s.x) / static_cast<int>(TILE_SIZE) - PADDING_TILES;
+    int tileY = static_cast<int>(s.y) / static_cast<int>(TILE_SIZE) - PADDING_TILES;
     ImGui::TextDisabled("Grid index: [%d, %d]", tileX, tileY);
     ImGui::Separator();
 
@@ -346,8 +346,6 @@ static ViewportResult drawViewportPanel(const sf::RenderTexture& rt)
     {
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
         {
-            //ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-            //ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
             ImVec2 delta = ImGui::GetIO().MouseDelta;
             if (delta.x != 0.f || delta.y != 0.f)
             {
