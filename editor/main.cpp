@@ -346,8 +346,9 @@ static ViewportResult drawViewportPanel(const sf::RenderTexture& rt)
     {
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
         {
-            ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-            ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+            //ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+            //ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+            ImVec2 delta = ImGui::GetIO().MouseDelta;
             if (delta.x != 0.f || delta.y != 0.f)
             {
                 result.dragging = true;
@@ -499,12 +500,14 @@ int main()
             s.x += vp.dragDelta.x;
             s.y += vp.dragDelta.y;
 
-            if (snapEnabled)
-            {
-                sf::Vector2f snapped = snapToGrid({ s.x, s.y });
-                s.x = snapped.x;
-                s.y = snapped.y;
-            }
+            s.sprite.setPosition({ s.x, s.y });
+        }
+        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && snapEnabled && selectedSpriteIdx >= 0)
+        {
+            auto& s = *sprites[selectedSpriteIdx];
+            sf::Vector2f snapped = snapToGrid({ s.x, s.y });
+            s.x = snapped.x;
+            s.y = snapped.y;
 
             s.sprite.setPosition({ s.x, s.y });
         }
