@@ -21,11 +21,28 @@
 #include <numeric>
 #include <string>
 #include <vector>
+#include <array>
+#include <SFML/Graphics/Vertex.hpp>
 
 namespace fs = std::filesystem;
 
-constexpr unsigned GAME_WINDOW_WIDTH = 1280u;
-constexpr unsigned GAME_WINDOW_HEIGHT = 720u;
+constexpr unsigned TILE_SIZE = 32u;
+
+constexpr unsigned VIRTUAL_WIDTH = 640u;
+constexpr unsigned VIRTUAL_HEIGHT = 640u;
+
+constexpr unsigned BOARD_TILES = 9u;
+constexpr unsigned BOARD_SIZE = BOARD_TILES * TILE_SIZE;
+constexpr unsigned BOARD_PADDING = (VIRTUAL_WIDTH - BOARD_SIZE) / 2u;
+
+constexpr unsigned BOARD_LEFT = BOARD_PADDING;
+constexpr unsigned BOARD_TOP = BOARD_PADDING;
+constexpr unsigned BOARD_RIGHT = BOARD_LEFT + BOARD_SIZE;
+constexpr unsigned BOARD_BOTTOM = BOARD_TOP + BOARD_SIZE;
+
+constexpr unsigned EDITOR_PANEL_WIDTH = 700u;
+constexpr unsigned EDITOR_WIDTH = VIRTUAL_WIDTH + EDITOR_PANEL_WIDTH;
+constexpr unsigned EDITOR_HEIGHT = VIRTUAL_HEIGHT + 60u;
 
 enum class EditorMode { Place, Move };
 
@@ -72,8 +89,73 @@ static std::vector<int> sortedByLayer(const SpriteList& sprites)
     std::iota(order.begin(), order.end(), 0);
     std::sort(order.begin(), order.end(), [&](int a, int b) {
         return sprites[a]->layer < sprites[b]->layer;
-        });
+    });
     return order;
+}
+
+static sf::Vector2f snapToGrid(sf::Vector2f pos)
+{
+    float x = std::floor(pos.x / static_cast<float>(TILE_SIZE)) * static_cast<float>(TILE_SIZE);
+    float y = std::floor(pos.y / static_cast<float>(TILE_SIZE)) * static_cast<float>(TILE_SIZE);
+    return { x, y };
+}
+
+static void drawViewportGrid(sf::RenderTexture& rt)
+{
+    std::vector<sf::Vertex> lines;
+
+    const int width = static_cast<int>(VIRTUAL_WIDTH);
+    const int height = static_cast<int>(VIRTUAL_HEIGHT);
+    const int tileSize = static_cast<int>(TILE_SIZE);
+
+    const int midX_i = (width / 2 / tileSize) * tileSize;
+    const int midY_i = (height / 2 / tileSize) * tileSize;
+
+    const sf::Color colGrid(255, 255, 255);
+    const sf::Color colCenter(0, 255, 0);
+
+    // vertical
+    for (int x = 0; x <= width; x += tileSize)
+    {
+        sf::Color c = (x == midX_i) ? colCenter : colGrid;
+        float fx = static_cast<float>(x);
+        lines.push_back({ sf::Vector2f(fx, 0.f), c });
+        lines.push_back({ sf::Vector2f(fx, static_cast<float>(height)), c });
+    }
+    // horizontal
+    for (int y = 0; y <= height; y += tileSize)
+    {
+        sf::Color c = (y == midY_i) ? colCenter : colGrid;
+        float fy = static_cast<float>(y);
+        lines.push_back({ sf::Vector2f(0.f, fy), c });
+        lines.push_back({ sf::Vector2f(static_cast<float>(width), fy), c });
+    }
+
+    rt.draw(lines.data(), lines.size(), sf::PrimitiveType::Lines);
+}
+
+static void drawBoardBoundary(sf::RenderTexture& rt)
+{
+    const float l = static_cast<float>(BOARD_LEFT);
+    const float t = static_cast<float>(BOARD_TOP);
+    const float s = static_cast<float>(BOARD_SIZE);
+
+    sf::RectangleShape fill({ s, s });
+    fill.setPosition({ l, t });
+    fill.setFillColor(sf::Color(30, 60, 30, 40));
+    fill.setOutlineColor(sf::Color(80, 180, 80, 200));
+    fill.setOutlineThickness(1.f);
+    rt.draw(fill);
+
+    std::vector<sf::Vertex> cross;
+    constexpr float m = 6.f;
+    sf::Color color(80, 180, 80, 200);
+    cross.push_back({ sf::Vector2f({l - m, t}), color });
+    cross.push_back({ sf::Vector2f({l + m, t}), color });
+    cross.push_back({ sf::Vector2f({l, t - m}), color });
+    cross.push_back({ sf::Vector2f({l, t + m}), color });
+
+    rt.draw(cross.data(), cross.size(), sf::PrimitiveType::Lines);
 }
 
 static void drawTexturePanel(const std::vector<std::string>& textures, int& selectedTexIdx)
@@ -136,6 +218,11 @@ static void drawPropertiesPanel(SpriteList& sprites, int selectedSpriteIdx)
     ImGui::Text("Texture: %s", fs::path(s.texturePath).filename().string().c_str());
     ImGui::Separator();
 
+    int tileX = static_cast<int>(s.x) / static_cast<int>(TILE_SIZE);
+    int tileY = static_cast<int>(s.y) / static_cast<int>(TILE_SIZE);
+    ImGui::TextDisabled("Grid index: [%d, %d]", tileX, tileY);
+    ImGui::Separator();
+
     bool changed = false;
     changed |= ImGui::DragFloat("X", &s.x, 1.f);
     changed |= ImGui::DragFloat("Y", &s.y, 1.f);
@@ -151,22 +238,25 @@ static void drawPropertiesPanel(SpriteList& sprites, int selectedSpriteIdx)
     ImGui::End();
 }
 
-static void drawModeToolbar(EditorMode& mode, int selectedTexIdx,
+static void drawModeToolbar(EditorMode& mode, bool& snapEnabled, int selectedTexIdx,
     const std::vector<std::string>& textures)
 {
     ImGui::Begin("Tools");
 
     bool placeActive = (mode == EditorMode::Place);
     if (placeActive) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 0.2f, 1.f));
-    if (ImGui::Button("[ Place ]", ImVec2(130, 0))) mode = EditorMode::Place;
+    if (ImGui::Button("[ Place ] (P)", ImVec2(140, 0))) mode = EditorMode::Place;
     if (placeActive) ImGui::PopStyleColor();
 
     ImGui::SameLine();
 
     bool moveActive = (mode == EditorMode::Move);
     if (moveActive) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.4f, 0.8f, 1.f));
-    if (ImGui::Button("[ Move ]", ImVec2(130, 0))) mode = EditorMode::Move;
+    if (ImGui::Button("[ Move ] (M)", ImVec2(140, 0))) mode = EditorMode::Move;
     if (moveActive) ImGui::PopStyleColor();
+
+    ImGui::SameLine();
+    ImGui::Checkbox("Snap to Grid", &snapEnabled);
 
     ImGui::Separator();
 
@@ -179,8 +269,12 @@ static void drawModeToolbar(EditorMode& mode, int selectedTexIdx,
     }
     else 
     {
-        ImGui::TextDisabled("Click to select / move");
+        ImGui::TextDisabled("Click to select | Drag to move | Del to remove");
     }
+
+    ImGui::Separator();
+    ImGui::TextDisabled("Board: %upx | offset: %u,%u | %u%u tiles @ %upx",
+        BOARD_SIZE, BOARD_LEFT, BOARD_TOP, BOARD_TILES, BOARD_TILES, TILE_SIZE);
 
     ImGui::End();
 }
@@ -198,16 +292,15 @@ static ViewportResult drawViewportPanel(const sf::RenderTexture& rt)
     ViewportResult result;
 
     ImGui::SetNextWindowSize(
-        ImVec2(static_cast<float>(GAME_WINDOW_WIDTH) + 16.f,
-            static_cast<float>(GAME_WINDOW_HEIGHT) + 36.f),
+        ImVec2(static_cast<float>(VIRTUAL_WIDTH) + 16.f,
+            static_cast<float>(VIRTUAL_HEIGHT) + 36.f),
         ImGuiCond_Always);
 
     ImGui::Begin("Viewport", nullptr,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
 
     ImVec2 imageOrigin = ImGui::GetCursorScreenPos();
-
-    ImGui::Image(rt, sf::Vector2f(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
+    ImGui::Image(rt, sf::Vector2f(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
 
     auto toWorld = [&](ImVec2 mouse) -> sf::Vector2f 
         { 
@@ -238,7 +331,7 @@ static ViewportResult drawViewportPanel(const sf::RenderTexture& rt)
 int main()
 {
     sf::RenderWindow window(
-        sf::VideoMode({ GAME_WINDOW_WIDTH + 700u, GAME_WINDOW_HEIGHT + 60u }),
+        sf::VideoMode({ EDITOR_WIDTH, EDITOR_HEIGHT }),
         "Sudoku Editor",
         sf::Style::Default
     );
@@ -248,17 +341,18 @@ int main()
         // TODO: error
     }
 
-    sf::RenderTexture sceneWindow;
-    if (!sceneWindow.resize({ GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT }))
+    sf::RenderTexture sceneRT;
+    if (!sceneRT.resize({ VIRTUAL_WIDTH, VIRTUAL_HEIGHT }))
     {
         // TODO: error
     }
-    sceneWindow.clear(sf::Color(20, 20, 20));
-    sceneWindow.display();
+    sceneRT.clear(sf::Color(20, 20, 20));
+    sceneRT.display();
 
     std::vector<std::string> textures = collectTextures("assets");
     SpriteList sprites;
     EditorMode mode = EditorMode::Move;
+    bool snapEnabled = true;
     int  selectedTexIdx = -1;
     int  selectedSpriteIdx = -1;
 
@@ -287,11 +381,13 @@ int main()
         // ImGui Update
         ImGui::SFML::Update(window, deltaClock.restart());
 
-        sceneWindow.clear(sf::Color(20, 20, 20));
+        sceneRT.clear(sf::Color(20, 20, 20));
+        drawViewportGrid(sceneRT);
+        drawBoardBoundary(sceneRT);
 
         for (int idx : sortedByLayer(sprites))
         {
-            sceneWindow.draw(sprites[idx]->sprite);
+            sceneRT.draw(sprites[idx]->sprite);
 
             if (idx == selectedSpriteIdx) 
             {
@@ -301,11 +397,11 @@ int main()
                 outline.setFillColor(sf::Color::Transparent);
                 outline.setOutlineColor(sf::Color(100, 200, 255));
                 outline.setOutlineThickness(2.f);
-                sceneWindow.draw(outline);
+                sceneRT.draw(outline);
             }
         }
 
-        sceneWindow.display();
+        sceneRT.display();
 
         if (ImGui::BeginMainMenuBar()) 
         {
@@ -326,21 +422,23 @@ int main()
             ImGui::EndMainMenuBar();
         }
 
-        drawModeToolbar(mode, selectedTexIdx, textures);
+        drawModeToolbar(mode, snapEnabled, selectedTexIdx, textures);
         drawTexturePanel(textures, selectedTexIdx);
         drawScenePanel(sprites, selectedSpriteIdx);
         drawPropertiesPanel(sprites, selectedSpriteIdx);
 
         // Viewport
-        ViewportResult vp = drawViewportPanel(sceneWindow);
+        ViewportResult vp = drawViewportPanel(sceneRT);
 
         if (vp.clicked)
         {
+            sf::Vector2f pos = snapEnabled ? snapToGrid(vp.worldPos) : vp.worldPos;
+
             if (mode == EditorMode::Place && selectedTexIdx >= 0) 
             {
                 // Place new Sprite
                 sprites.push_back(std::make_unique<SpriteEntry>(
-                    textures[selectedTexIdx], vp.worldPos.x, vp.worldPos.y));
+                    textures[selectedTexIdx], pos.x, pos.y));
                 selectedSpriteIdx = static_cast<int>(sprites.size()) - 1;
             }
             else if (mode == EditorMode::Move) 
@@ -362,9 +460,16 @@ int main()
             auto& s = *sprites[selectedSpriteIdx];
             s.x = vp.dragDelta.x;
             s.y = vp.dragDelta.y;
+
+            if (snapEnabled)
+            {
+                sf::Vector2f snapped = snapToGrid({ s.x, s.y });
+                s.x = snapped.x;
+                s.y = snapped.y;
+            }
+
             s.sprite.setPosition({ s.x, s.y });
         }
-
 
         // main window
         window.clear(sf::Color(30, 30, 30));
