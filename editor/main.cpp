@@ -15,12 +15,15 @@
 
 #include <imgui.h>
 #include <imgui-SFML.h>
+#include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <memory>
+#include <nlohmann/json_fwd.hpp>
 #include <numeric>
 #include <string>
 #include <vector>
@@ -100,6 +103,30 @@ static sf::Vector2f snapToGrid(sf::Vector2f pos)
 {
     const float ts = static_cast<float>(TILE_SIZE);
     return { std::floor(pos.x / ts) * ts, std::floor(pos.y / ts) * ts };
+}
+
+using json = nlohmann::json;
+
+static void exportScene(const SpriteList& sprites, const std::string& file)
+{
+    json scene;
+
+    for (const auto& s : sprites)
+    {
+        json sprite;
+
+        sprite["texture"] = s->texturePath;
+        sprite["x"] = s->x;
+        sprite["y"] = s->y;
+        sprite["scaleX"] = s->scaleX;
+        sprite["scaleY"] = s->scaleY;
+        sprite["layer"] = s->layer;
+
+        scene["sprites"].push_back(sprite);
+    }
+
+    std::ofstream out(file);
+    out << scene.dump(4);
 }
 
 static void drawViewportGrid(sf::RenderTexture& rt)
@@ -444,7 +471,7 @@ int main()
         {
             if (ImGui::BeginMenu("File")) 
             {
-                if (ImGui::MenuItem("Export Scene")) { /* TODO */ }
+                if (ImGui::MenuItem("Export Scene")) { exportScene(sprites, "scene.json"); }
                 if (ImGui::MenuItem("Load Scene")) { /* TODO */ }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit")) window.close();
