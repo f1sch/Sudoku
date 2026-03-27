@@ -1,10 +1,11 @@
+#include "../shared/Structs.h"
+
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/PrimitiveType.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderTexture.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Sprite.hpp>
-#include <SFML/Graphics/Texture.hpp>
 #include <SFML/Graphics/Vertex.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/System/Vector2.hpp>
@@ -52,27 +53,6 @@ constexpr unsigned EDITOR_HEIGHT = VIRTUAL_HEIGHT + 60u;
 
 enum class EditorMode { Place, Move };
 
-struct SpriteEntry 
-{
-    std::string texturePath;
-    sf::Texture texture;
-    sf::Sprite  sprite{ texture };
-    float x = 0.f, y = 0.f;
-    float scaleX = 1.f, scaleY = 1.f;
-    int layer = 0;
-
-    SpriteEntry(const std::string& path, float px, float py)
-        : texturePath(path), x(px), y(py)
-    {
-        texture.loadFromFile(path);
-        sprite.setTexture(texture, true);
-        sprite.setPosition({ px, py });
-    }
-
-    SpriteEntry(const SpriteEntry&) = delete;
-    SpriteEntry& operator=(const SpriteEntry&) = delete;
-};
-
 using SpriteList = std::vector<std::unique_ptr<SpriteEntry>>;
 
 static std::vector<std::string> collectTextures(const std::string& rootDir)
@@ -115,9 +95,11 @@ static void exportScene(const SpriteList& sprites, const std::string& file)
     {
         json sprite;
 
-        sprite["texture"] = s->texturePath;
+        sprite["texturePath"] = s->texturePath;
         sprite["x"] = s->x;
         sprite["y"] = s->y;
+        sprite["tileX"] = (static_cast<int>(s->x) / TILE_SIZE) - PADDING_TILES;
+        sprite["tileY"] = (static_cast<int>(s->y) / TILE_SIZE) - PADDING_TILES;
         sprite["scaleX"] = s->scaleX;
         sprite["scaleY"] = s->scaleY;
         sprite["layer"] = s->layer;

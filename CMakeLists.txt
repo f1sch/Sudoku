@@ -42,7 +42,7 @@ FetchContent_Declare(
     GIT_SHALLOW ON
 )
 FetchContent_MakeAvailable(nlohmann_json)
-
+# TODO: Add include directory "../shared/"
 # Sudoku Game
 file(GLOB_RECURSE GAME_SOURCES CONFIGURE_DEPENDS src/*.cpp)
 
@@ -54,7 +54,7 @@ target_link_libraries(Sudoku
     ImGui-SFML::ImGui-SFML
     nlohmann_json::nlohmann_json
 )
-
+# TODO: refactor custom command into function for sudoku and editor
 add_custom_command(TARGET Sudoku POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/assets

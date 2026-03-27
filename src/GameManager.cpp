@@ -11,6 +11,8 @@
 
 #include <memory>
 
+constexpr int TILE_SIZE = 32;
+
 GameManager::GameManager()
 	: m_running(true)
 {
@@ -24,7 +26,7 @@ GameManager::GameManager()
 	
 	sf::Vector2 size = m_renderer->GetWindow().getSize();
 	auto [width, height] = size;
-	m_gridSystem = std::make_unique<GridSystem>(sf::Vector2f(width / 2.f, height / 2.f));
+	m_gridSystem = std::make_unique<GridSystem>(TILE_SIZE, sf::Vector2f(width / 2.f, height / 2.f));
 
 	m_sceneManager = std::make_unique<SceneManager>(*m_assetManager, *m_gridSystem);
 }
