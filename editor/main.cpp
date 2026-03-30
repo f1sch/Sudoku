@@ -128,6 +128,56 @@ static void exportScene(const SpriteList& sprites, const std::string& file)
     out << scene.dump(4);
 }
 
+static bool importScene(SpriteList& sprites, const std::string& file)
+{
+    std::ifstream in(file);
+    if (!in.is_open()) return false;
+
+    json scene;
+    try { scene = json::parse(in); }
+    catch (...) { return false; }
+
+    if (!scene.contains("sprites")) return false;
+
+    sprites.clear();
+
+    for (const auto& sprite : scene["sprites"])
+    {
+        std::string path = sprite.value("texturePath", "");
+        float x = sprite.value("x", 0.f);
+        float y = sprite.value("y", 0.f);
+        bool fromTilemap = sprite.value("fromTilemap", false);
+
+        if (fromTilemap && sprite.contains("textureRect"))
+        {
+            const auto& r = sprite["textureRect"];
+            sf::IntRect rect(
+                { r.value("left", 0), r.value("top", 0) },
+                { r.value("width", 32), r.value("height", 32) }
+            );
+            auto s = std::make_unique<SpriteEntry>(path, x, y, rect);
+            s->tileCol = sprite.value("tilemapCol", 0);
+            s->tileRow = sprite.value("tilemapRow", 0);
+            s->scaleX = sprite.value("scaleX", 1.0f);
+            s->scaleY = sprite.value("scaleY", 1.0f);
+            s->layer = sprite.value("layer", 0);
+            s->sprite.setScale({ s->scaleX, s->scaleY });
+            sprites.push_back(std::move(s));
+        }
+        else
+        {
+            auto s = std::make_unique<SpriteEntry>(path, x, y);
+            s->scaleX = sprite.value("scaleX", 1.f);
+            s->scaleY = sprite.value("scaleY", 1.f);
+            s->layer = sprite.value("layer", 0);
+            s->sprite.setScale({ s->scaleX, s->scaleY });
+            sprites.push_back(std::move(s));
+        }
+    }
+
+    return true;
+}
+
 static void drawViewportGrid(sf::RenderTexture& rt)
 {
     std::vector<sf::Vertex> lines;
@@ -543,8 +593,16 @@ int main()
         {
             if (ImGui::BeginMenu("File")) 
             {
+                // TODO: add portable-file-dialogs to select scene-file
                 if (ImGui::MenuItem("Export Scene")) { exportScene(sprites, "scene.json"); }
-                if (ImGui::MenuItem("Load Scene")) { /* TODO */ }
+                if (ImGui::MenuItem("Load Scene")) 
+                { 
+                    if (!importScene(sprites, "scene.json"))
+                    {
+                        // TODO: add error handling
+                    }
+                    selectedSpriteIdx = -1;
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit")) window.close();
                 ImGui::EndMenu();
