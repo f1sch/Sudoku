@@ -1,9 +1,9 @@
 #pragma once
-#include "../shared/Structs.h"
 #include "IScene.h"
 
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics/Texture.hpp>
 
 #include <memory>
 #include <string>
@@ -11,6 +11,17 @@
 
 class AssetManager;
 class GridSystem;
+
+struct LoadedSprite
+{
+	sf::Texture texture;
+	sf::Sprite sprite{ texture };
+	int layer = 0;
+
+	LoadedSprite(const LoadedSprite&) = delete;
+	LoadedSprite& operator=(const LoadedSprite&) = delete;
+	LoadedSprite() = default;
+};
 
 class GameScene : public IScene
 {
@@ -22,9 +33,7 @@ public:
 	void Render(std::vector<const sf::Drawable*>& queue) override;
 	void LoadSceneFrom(const std::string& file) override;
 private:
-	sf::Sprite m_BoardMockUpSprite;
-	sf::Sprite m_cellSprite;
 	std::vector<sf::Sprite> m_cells;
-	std::vector<std::unique_ptr<SpriteEntry>> m_sprites;
+	std::vector<std::unique_ptr<LoadedSprite>> m_sprites;
 };
 

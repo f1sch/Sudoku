@@ -2,21 +2,20 @@
 
 #include "AssetManager.h"
 #include "GridSystem.h"
-#include "../shared/Structs.h"
 
-#include <SFML/Graphics/Drawable.hpp>
 #include <nlohmann/json.hpp>
-
-#include <memory>
-#include <vector>
-#include <string>
-#include <fstream>
-#include <utility>
 #include <nlohmann/json_fwd.hpp>
+#include <SFML/Graphics/Drawable.hpp>
+#include <SFML/Graphics/Rect.hpp>
+
+#include <algorithm>
+#include <fstream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 GameScene::GameScene(AssetManager& am, GridSystem& gs)
-	: m_BoardMockUpSprite(am.Get(AssetManager::TextureID::Board)),
-	m_cellSprite(am.Get(AssetManager::TextureID::CellEmpty))
 {
 	LoadSceneFrom("scene.json");
 }
@@ -44,19 +43,41 @@ void GameScene::LoadSceneFrom(const std::string& file)
 	nlohmann::json scene;
 	in >> scene;
 
-	for (auto& s : scene["sprites"])
+	m_sprites.clear();
+	if (!scene.contains("sprites")) return;
+
+	for (const auto& s : scene["sprites"])
 	{
-		auto sprite = std::make_unique<SpriteEntry>(
-			s["texturePath"],
-			s["x"],
-			s["y"]
-		);
+		auto ls = std::make_unique<LoadedSprite>();
 
-		sprite->scaleX = s["scaleX"];
-		sprite->scaleY = s["scaleY"];
-		sprite->layer = s["layer"];
-		sprite->sprite.setScale({ sprite->scaleX, sprite->scaleY });
+		std::string path = s["texturePath"].get<std::string>();
+		if (!ls->texture.loadFromFile(path))
+			continue;
 
-		m_sprites.push_back(std::move(sprite));
+		ls->sprite.setTexture(ls->texture, true);
+
+		bool fromTilemap = s.value("fromTilemap", false);
+		if (fromTilemap && s.contains("textureRect"))
+		{
+			const auto& r = s["textureRect"];
+			ls->sprite.setTextureRect(sf::IntRect(
+				{ r["left"].get<int>(), r["top"].get<int>() },
+				{ r["width"].get<int>(), r["height"].get<int>() }
+			));
+		}
+
+		float x = s.value("x", 0.f);
+		float y = s.value("y", 0.f);
+		float scaleX = s.value("scaleX", 1.f);
+		float scaleY = s.value("scaleY", 1.f);
+
+		ls->sprite.setPosition({ x, y });
+		ls->sprite.setScale({ scaleX, scaleY });
+		ls->layer = s.value("layer", 0);
+		
+		m_sprites.push_back(std::move(ls));
 	}
+	std::sort(m_sprites.begin(), m_sprites.end(), [](const auto& a, const auto& b) 
+		{ return a->layer < b->layer; }
+	);
 }

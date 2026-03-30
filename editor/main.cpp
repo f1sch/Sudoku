@@ -28,6 +28,8 @@
 #include <numeric>
 #include <string>
 #include <vector>
+#include <SFML/Graphics/Rect.hpp>
+#include <utility>
 
 namespace fs = std::filesystem;
 
@@ -49,7 +51,7 @@ constexpr float RULER_SIZE = 20.f;
 
 constexpr unsigned EDITOR_PANEL_WIDTH = 700u;
 constexpr unsigned EDITOR_WIDTH = VIRTUAL_WIDTH + EDITOR_PANEL_WIDTH;
-constexpr unsigned EDITOR_HEIGHT = VIRTUAL_HEIGHT + 60u;
+constexpr unsigned EDITOR_HEIGHT = VIRTUAL_HEIGHT + 500u;
 
 enum class EditorMode { Place, Move };
 
@@ -103,6 +105,21 @@ static void exportScene(const SpriteList& sprites, const std::string& file)
         sprite["scaleX"] = s->scaleX;
         sprite["scaleY"] = s->scaleY;
         sprite["layer"] = s->layer;
+        sprite["fromTilemap"] = s->fromTilemap;
+
+        if (s->fromTilemap)
+        {
+            sprite["textureRect"] = {
+                { "left", s->tileRect.position.x},
+                { "top", s->tileRect.position.y},
+                { "width", s->tileRect.size.x},
+                { "height", s->tileRect.size.y},
+            };
+            sprite["tilemapCol"] = s->tileCol;
+            sprite["tilemapRow"] = s->tileRow;
+            sprite["tilemapTileW"] = s->tileRect.size.x;
+            sprite["tilemapTileH"] = s->tileRect.size.y;
+        }
 
         scene["sprites"].push_back(sprite);
     }
@@ -374,6 +391,76 @@ static ViewportResult drawViewportPanel(const sf::RenderTexture& rt)
     return result;
 }
 
+static bool drawTilemapPanel(TilemapAsset& tm, int& selCol, int& selRow)
+{
+    bool changed = false;
+    ImGui::Begin("Tilemap");
+
+    static char pathBuf[256] = "assets/textures/sudokuTilemap.png";
+    static int tileW = 32, tileH = 32;
+    ImGui::InputText("Path", pathBuf, sizeof(pathBuf));
+    ImGui::InputInt("Tile W", &tileW);
+    ImGui::InputInt("Tile H", &tileH);
+    if (ImGui::Button("Load Tilemap"))
+        tm.load(pathBuf, tileW, tileH);
+
+    if (tm.cols == 0) 
+    { 
+        ImGui::TextDisabled("No tilemap loaded."); 
+        ImGui::End(); 
+        return false; 
+    };
+
+    ImGui::Separator();
+    ImGui::Text("%s (%dx%d tiles", fs::path(tm.path).filename().string().c_str(), tm.cols, tm.rows);
+    ImGui::Separator();
+
+    ImVec2 origin = ImGui::GetCursorScreenPos();
+    const float dispW = static_cast<float>(tm.texture.getSize().x);
+    const float dispH = static_cast<float>(tm.texture.getSize().y);
+    ImGui::Image(tm.texture, sf::Vector2f(dispW, dispH));
+
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    const float tw = static_cast<float>(tm.tileW);
+    const float th = static_cast<float>(tm.tileH);
+    const ImU32 colGrid = IM_COL32(80, 80, 80, 180);
+    const ImU32 colSel = IM_COL32(100, 200, 255, 180);
+
+    for (int c = 0; c <= tm.cols; ++c)
+    {
+        dl->AddLine(ImVec2(origin.x + c * tw, origin.y),
+            ImVec2(origin.x + c * tw, origin.y + dispH), colGrid);
+    }
+    for (int r = 0; r <= tm.rows; ++r)
+    {
+        dl->AddLine(ImVec2(origin.x, origin.y + r * th), 
+            ImVec2(origin.x + dispW, origin.y + r * th), colGrid);
+    }
+
+    if (selCol >= 0 && selRow >= 0)
+    {
+        ImVec2 tl(origin.x + selCol * tw, origin.y + selRow * th);
+        ImVec2 br(tl.x + tw, tl.y + th);
+        dl->AddRect(tl, br, colSel, 0.f, 0, 2.f);
+    }
+
+    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        ImVec2 mouse = ImGui::GetMousePos();
+        int c = static_cast<int>((mouse.x - origin.x) / tw);
+        int r = static_cast<int>((mouse.y - origin.y) / th);
+        if (c >= 0 && c < tm.cols && r >= 0 && r < tm.rows)
+        {
+            selCol = c;
+            selRow = r;
+            changed = true;
+        }
+    }
+
+    ImGui::End();
+    return changed;
+}
+
 int main()
 {
     sf::RenderWindow window(
@@ -401,6 +488,9 @@ int main()
     bool snapEnabled = true;
     int  selectedTexIdx = -1;
     int  selectedSpriteIdx = -1;
+
+    TilemapAsset tm;
+    int tmSelCol = -1, tmSelRow = -1;
 
     sf::Clock deltaClock;
 
@@ -470,24 +560,34 @@ int main()
 
         drawModeToolbar(mode, snapEnabled, selectedTexIdx, textures);
         drawTexturePanel(textures, selectedTexIdx);
+        drawTilemapPanel(tm, tmSelCol, tmSelRow);
         drawScenePanel(sprites, selectedSpriteIdx);
         drawPropertiesPanel(sprites, selectedSpriteIdx);
 
         // Viewport
         ViewportResult vp = drawViewportPanel(sceneRT);
 
-        if (vp.clicked)
+        if (vp.clicked && mode == EditorMode::Place)
         {
             sf::Vector2f pos = snapEnabled ? snapToGrid(vp.worldPos) : vp.worldPos;
 
-            if (mode == EditorMode::Place && selectedTexIdx >= 0) 
+            if (tmSelCol >= 0 && tmSelRow >= 0 && tm.cols > 0) 
+            {
+                sf::IntRect rect = tm.rectAt(tmSelCol, tmSelRow);
+                auto entry = std::make_unique<SpriteEntry>(tm.path, pos.x, pos.y, rect);
+                entry->tileCol = tmSelCol;
+                entry->tileRow = tmSelRow;
+                sprites.push_back(std::move(entry));
+                selectedSpriteIdx = static_cast<int>(sprites.size()) - 1;
+            }
+            else if (selectedTexIdx >= 0)
             {
                 // Place new Sprite
                 sprites.push_back(std::make_unique<SpriteEntry>(
                     textures[selectedTexIdx], pos.x, pos.y));
                 selectedSpriteIdx = static_cast<int>(sprites.size()) - 1;
             }
-            else if (mode == EditorMode::Move) 
+            else if (mode == EditorMode::Move)
             {
                 selectedSpriteIdx = -1;
                 for (int i = static_cast<int>(sprites.size()) - 1; i >= 0; --i) 

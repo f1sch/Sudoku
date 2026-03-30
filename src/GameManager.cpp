@@ -21,8 +21,6 @@ GameManager::GameManager()
 	m_gameLoop = std::make_unique<GameLoop>(this, &m_running, m_renderer->GetWindow());
 	
 	m_assetManager = std::make_unique<AssetManager>();
-	m_assetManager->Load(AssetManager::TextureID::CellEmpty, "assets/textures/SingleCell.png");
-	m_assetManager->Load(AssetManager::TextureID::Board, "assets/textures/SudokuMockUp.png");
 	
 	sf::Vector2 size = m_renderer->GetWindow().getSize();
 	auto [width, height] = size;
