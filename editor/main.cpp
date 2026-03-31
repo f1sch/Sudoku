@@ -1,7 +1,9 @@
-#include "../shared/Structs.h"
+#include "shared/Structs.h"
+#include "shared/Data.h"
 
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/PrimitiveType.hpp>
+#include <SFML/Graphics/Rect.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderTexture.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
@@ -17,6 +19,7 @@
 #include <imgui.h>
 #include <imgui-SFML.h>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -24,28 +27,12 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
-#include <nlohmann/json_fwd.hpp>
 #include <numeric>
 #include <string>
-#include <vector>
-#include <SFML/Graphics/Rect.hpp>
 #include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
-
-constexpr unsigned TILE_SIZE = 32u;
-constexpr unsigned BOARD_TILES = 9u;
-constexpr unsigned BOARD_SIZE = BOARD_TILES * TILE_SIZE;
-
-constexpr unsigned PADDING_TILES = 5u;
-constexpr unsigned TOTAL_TILES = BOARD_TILES + PADDING_TILES * 2u;
-constexpr unsigned VIRTUAL_WIDTH = TOTAL_TILES * TILE_SIZE;
-constexpr unsigned VIRTUAL_HEIGHT = VIRTUAL_WIDTH;
-
-constexpr unsigned BOARD_LEFT = PADDING_TILES + TILE_SIZE;
-constexpr unsigned BOARD_TOP = PADDING_TILES + TILE_SIZE;
-constexpr unsigned BOARD_RIGHT = BOARD_LEFT + BOARD_SIZE;
-constexpr unsigned BOARD_BOTTOM = BOARD_TOP + BOARD_SIZE;
 
 constexpr float RULER_SIZE = 20.f;
 

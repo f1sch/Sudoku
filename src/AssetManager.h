@@ -7,7 +7,7 @@
 class AssetManager
 {
 public:
-	enum class TextureID { CellEmpty, Board };
+	enum class TextureID { CellEmpty, Board, Number };
 
 	AssetManager();
 

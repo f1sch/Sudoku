@@ -1,12 +1,15 @@
 #include "GameScene.h"
 
 #include "AssetManager.h"
+#include "Board.h"
 #include "GridSystem.h"
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Rect.hpp>
+#include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics/Texture.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -14,10 +17,52 @@
 #include <string>
 #include <utility>
 #include <vector>
+//testing
+#include <iostream>
 
 GameScene::GameScene(AssetManager& am, GridSystem& gs)
 {
 	LoadSceneFrom("scene.json");
+	m_board = std::make_unique<Board>();
+	// for testing
+	for (int i = 0; i < 9; ++i)
+	{
+		if (i % 3 == 0 && i != 0)
+		{
+			std::cout << "------+-------+------" << std::endl;
+		}
+		for (int j = 0; j < 9; ++j)
+		{
+			if (j % 3 == 0 && j != 0)
+			{
+				std::cout << "| ";
+			}
+			std::cout << m_board->GetCell(i, j).number << " ";
+		}
+		std::cout << std::endl;
+	}
+	// This only creates the number textures from the number spritesheet.
+	// The correct position on the grid has to be set for the 81 tiles
+	const sf::Texture& numbers = am.Get(AssetManager::TextureID::Number);
+	// Board holds the Cells, these Cells have a member that defines which number they hold.
+	// The GameScene pulls all the data from the different Systems and ties it together
+	// create RenderObjects
+	for (int r = 0; r < 9; ++r)
+	{
+		for (int c = 0; c < 9; ++c)
+		{
+			auto number = m_board->GetCell(r, c).number;
+			if (number == 0) continue;
+			sf::Sprite s(numbers);
+			int index = number - 1;
+			int texCol = index % 3;
+			int texRow = index / 3;
+			s.setTextureRect(sf::IntRect({ texCol * 32, texRow * 32 }, { 32,32 }));
+			s.setPosition(gs.tileToWorld(c, r));
+			m_numbersInCells.push_back(s);
+		}
+
+	}
 }
 
 void GameScene::Update()
@@ -30,6 +75,10 @@ void GameScene::Render()
 
 void GameScene::Render(std::vector<const sf::Drawable*>& queue)
 {
+	for (const auto& number : m_numbersInCells)
+	{
+		queue.push_back(&number);
+	}
 	// Submit RenderObjects to RenderQueue
 	for (const auto& sprite : m_sprites)
 	{

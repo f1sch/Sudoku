@@ -3,81 +3,61 @@ project(Sudoku LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-include(FetchContent)
+find_package(SFML COMPONENTS Graphics Window Audio System CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
+find_package(ImGui-SFML CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
-# SFML
-FetchContent_Declare(
-    SFML
-    GIT_REPOSITORY https://github.com/SFML/SFML.git
-    GIT_TAG 3.0.2
-    GIT_SHALLOW ON
-    EXCLUDE_FROM_ALL
-    SYSTEM
+# shared data
+file(GLOB_RECURSE SHARED_SOURCES CONFIGURE_DEPENDS shared/*.cpp)
+
+add_library(sudoku_shared INTERFACE) #${SHARED_SOURCES}) # Make INTERFACE->PUBLIC if (source files)
+
+# Add source files
+target_sources(sudoku_shared
+    PRIVATE
+        ${SHARED_SOURCES}
 )
-FetchContent_MakeAvailable(SFML)
 
-# Dear ImGui
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG v1.91.1
+target_include_directories(sudoku_shared
+    INTERFACE
+        ${CMAKE_SOURCE_DIR}
 )
-FetchContent_MakeAvailable(imgui)
+target_compile_features(sudoku_shared INTERFACE cxx_std_17)
 
-set(IMGUI_DIR ${imgui_SOURCE_DIR})
-
-# ImGui-SFML
-FetchContent_Declare(
-    ImGui-SFML
-    GIT_REPOSITORY https://github.com/eliasdaler/imgui-sfml.git
-    GIT_TAG master
-)
-FetchContent_MakeAvailable(ImGui-SFML)
-
-# nlohmann/json (editor data export)
-FetchContent_Declare(
-    nlohmann_json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.3
-    GIT_SHALLOW ON
-)
-FetchContent_MakeAvailable(nlohmann_json)
-# TODO: Add include directory "../shared/"
 # Sudoku Game
 file(GLOB_RECURSE GAME_SOURCES CONFIGURE_DEPENDS src/*.cpp)
 
 add_executable(Sudoku ${GAME_SOURCES})
-target_compile_features(Sudoku PRIVATE cxx_std_17)
 target_link_libraries(Sudoku 
-    PRIVATE 
+    PRIVATE
+    sudoku_shared
     SFML::Graphics
     ImGui-SFML::ImGui-SFML
     nlohmann_json::nlohmann_json
-)
-# TODO: refactor custom command into function for sudoku and editor
-add_custom_command(TARGET Sudoku POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/assets
-        $<TARGET_FILE_DIR:Sudoku>/assets
 )
 
 # ImGui Editor
 file(GLOB_RECURSE EDITOR_SOURCES CONFIGURE_DEPENDS editor/*.cpp)
 
 add_executable(SudokuEditor ${EDITOR_SOURCES})
-target_compile_features(SudokuEditor PRIVATE cxx_std_17)
 target_link_libraries(SudokuEditor
     PRIVATE
+    sudoku_shared
     SFML::Graphics
     ImGui-SFML::ImGui-SFML
     nlohmann_json::nlohmann_json
 )
 
-# make assets available for editor
-add_custom_command(TARGET SudokuEditor POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
+function(copy_assets TARGET_NAME)
+    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/assets
-        $<TARGET_FILE_DIR:SudokuEditor>/assets
-)
+        $<TARGET_FILE_DIR:${TARGET_NAME}>/assets
+    )
+endfunction()
+
+copy_assets(Sudoku)
+copy_assets(SudokuEditor)
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Sudoku)

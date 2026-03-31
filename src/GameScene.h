@@ -1,10 +1,13 @@
 #pragma once
 #include "IScene.h"
 
+#include "Board.h"
+
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -33,7 +36,9 @@ public:
 	void Render(std::vector<const sf::Drawable*>& queue) override;
 	void LoadSceneFrom(const std::string& file) override;
 private:
-	std::vector<sf::Sprite> m_cells;
 	std::vector<std::unique_ptr<LoadedSprite>> m_sprites;
+	std::unique_ptr<Board> m_board;
+	
+	std::vector<sf::Sprite> m_numbersInCells;
 };
 

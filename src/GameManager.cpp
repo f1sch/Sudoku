@@ -21,7 +21,8 @@ GameManager::GameManager()
 	m_gameLoop = std::make_unique<GameLoop>(this, &m_running, m_renderer->GetWindow());
 	
 	m_assetManager = std::make_unique<AssetManager>();
-	
+	m_assetManager->Load(AssetManager::TextureID::Number, "assets/textures/numbers.png");
+
 	sf::Vector2 size = m_renderer->GetWindow().getSize();
 	auto [width, height] = size;
 	m_gridSystem = std::make_unique<GridSystem>(TILE_SIZE, sf::Vector2f(width / 2.f, height / 2.f));
