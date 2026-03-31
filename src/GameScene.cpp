@@ -75,14 +75,14 @@ void GameScene::Render()
 
 void GameScene::Render(std::vector<const sf::Drawable*>& queue)
 {
-	for (const auto& number : m_numbersInCells)
-	{
-		queue.push_back(&number);
-	}
 	// Submit RenderObjects to RenderQueue
 	for (const auto& sprite : m_sprites)
 	{
 		queue.push_back(&sprite->sprite);
+	}
+	for (const auto& number : m_numbersInCells)
+	{
+		queue.push_back(&number);
 	}
 }
 
