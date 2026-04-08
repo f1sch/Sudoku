@@ -3,6 +3,7 @@
 #include "GameScene.h"
 
 #include <SFML/Graphics/Drawable.hpp>
+#include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
 #include <memory>
@@ -30,4 +31,9 @@ void SceneManager::Render(std::vector<const sf::Drawable*>& queue)
 {
 	// Fill RenderQueue with Objects
 	m_scene->Render(queue);
+}
+
+void SceneManager::ProcessEvent(const sf::Event& event)
+{
+	m_scene->ProcessEvent(event);
 }

@@ -6,8 +6,8 @@
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <SFML/Window/Event.hpp>
 
-#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -34,11 +34,13 @@ public:
 	void Update() override;
 	void Render() override;
 	void Render(std::vector<const sf::Drawable*>& queue) override;
+	void ProcessEvent(const sf::Event& event) override;
 	void LoadSceneFrom(const std::string& file) override;
 private:
 	std::vector<std::unique_ptr<LoadedSprite>> m_sprites;
 	std::unique_ptr<Board> m_board;
-	
 	std::vector<sf::Sprite> m_numbersInCells;
+	int m_cursorRow = 0;
+	int m_cursorCol = 0;
 };
 

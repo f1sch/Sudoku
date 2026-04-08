@@ -4,6 +4,7 @@
 #include "IScene.h"
 
 #include <SFML/Graphics/Drawable.hpp>
+#include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
 #include <memory>
@@ -21,6 +22,7 @@ public:
 	void Update() override;
 	void Render() override;
 	void Render(std::vector<const sf::Drawable*>& queue);
+	void ProcessEvent(const sf::Event& event) override;
 private:
 	std::unique_ptr<IScene> m_scene;
 };

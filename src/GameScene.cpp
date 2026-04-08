@@ -10,6 +10,7 @@
 #include <SFML/Graphics/Rect.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <SFML/Window/Event.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -61,7 +62,6 @@ GameScene::GameScene(AssetManager& am, GridSystem& gs)
 			s.setPosition(gs.tileToWorld(c, r));
 			m_numbersInCells.push_back(s);
 		}
-
 	}
 }
 
@@ -84,6 +84,11 @@ void GameScene::Render(std::vector<const sf::Drawable*>& queue)
 	{
 		queue.push_back(&number);
 	}
+}
+
+void GameScene::ProcessEvent(const sf::Event& event)
+{
+
 }
 
 void GameScene::LoadSceneFrom(const std::string& file)

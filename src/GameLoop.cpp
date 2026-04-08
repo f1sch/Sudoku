@@ -26,5 +26,7 @@ void GameLoop::Input()
 	{
 		if (event->is<sf::Event::Closed>())
 			m_window.close();
+		else
+			m_updatable->ProcessEvent(event.value());
 	}
 }
