@@ -25,12 +25,9 @@ GameManager::GameManager()
 	m_gameLoop = std::make_unique<GameLoop>(this, &m_running, m_renderer->GetWindow());
 	
 	m_assetManager = std::make_unique<AssetManager>();
-	m_assetManager->Load(AssetManager::TextureID::Number, "assets/textures/numbers.png");
+	m_assetManager->Load(AssetManager::TextureID::Number, "assets/textures/numbersWhite.png");
 
-	sf::Vector2 size = m_renderer->GetWindow().getSize();
-	auto [width, height] = size;
-	//m_gridSystem = std::make_unique<GridSystem>(TILE_SIZE, sf::Vector2f(width / 2.f, height / 2.f));
-	//m_gridSystem = std::make_unique<GridSystem>(TILE_SIZE, sf::Vector2f(BOARD_RIGHT/2.f, BOARD_BOTTOM/2.f));
+	// TODO: replace magic numbers
 	m_gridSystem = std::make_unique<GridSystem>(TILE_SIZE, sf::Vector2f(160.0f, 160.0f));
 
 	m_sceneManager = std::make_unique<SceneManager>(*m_assetManager, *m_gridSystem);

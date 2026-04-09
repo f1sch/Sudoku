@@ -6,22 +6,22 @@
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Rect.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
+#include <SFML/Window/Keyboard.hpp>
 
 #include <algorithm>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-//testing
-#include <iostream>
-#include <SFML/Window/Keyboard.hpp>
-#include <map>
 
 GameScene::GameScene(AssetManager& am, GridSystem& gs)
 	: m_gridSystem(gs)
@@ -29,13 +29,9 @@ GameScene::GameScene(AssetManager& am, GridSystem& gs)
 	LoadSceneFrom("scene.json");
 	m_board = std::make_unique<Board>();
 	
-	// This only creates the number textures from the number spritesheet.
-	// The correct position on the grid has to be set for the 81 tiles
 	m_numbersTex = &am.Get(AssetManager::TextureID::Number);
-	// Board holds the Cells, these Cells have a member that defines which number they hold.
-	// The GameScene pulls all the data from the different Systems and ties it together
-	// create RenderObjects
 	RebuildNumberSprites();
+	
 	m_cursor.setPosition(gs.tileToWorld(m_cursorCol, m_cursorRow));
 	m_cursor.setSize(sf::Vector2f(TEX_WIDTH, TEX_WIDTH));
 	m_cursor.setFillColor(sf::Color::Transparent);
@@ -169,6 +165,10 @@ void GameScene::RebuildNumberSprites()
 			int texRow = index / 3;
 			s.setTextureRect(sf::IntRect({ texCol * 32, texRow * 32 }, { 32,32 }));
 			s.setPosition(m_gridSystem.tileToWorld(c, r));
+			if (m_board->GetCell(r, c).canEdit)
+				s.setColor(sf::Color::Blue);
+			else
+				s.setColor(sf::Color::Black);
 			m_numbersInCells.push_back(s);
 		}
 	}
