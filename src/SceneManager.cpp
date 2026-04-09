@@ -16,6 +16,7 @@ SceneManager::SceneManager(AssetManager& am, GridSystem& gs)
 
 void SceneManager::OnKeyPressed(sf::Keyboard::Key key)
 {
+	m_scene->OnKeyPressed(key);
 }
 
 void SceneManager::Update()

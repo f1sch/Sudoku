@@ -14,6 +14,7 @@ public:
 	Board();
 
 	Cell GetCell(int row, int col) const;
+	void SetCell(int row, int col, int num);
 private:
 	Cell m_cells[9][9];
 };

@@ -32,3 +32,11 @@ Cell Board::GetCell(int row, int col) const
 {
 	return m_cells[row][col];
 }
+
+void Board::SetCell(int row, int col, int num)
+{
+	if (m_cells[row][col].canEdit)
+	{
+		m_cells[row][col].number = num;
+	}
+}

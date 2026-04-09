@@ -1,4 +1,5 @@
 #pragma once
+#include "IInputListener.h"
 #include "IUpdatable.h"
 
 #include <SFML/Graphics/Drawable.hpp>
@@ -6,7 +7,7 @@
 #include <vector>
 #include <string>
 
-class IScene : public IUpdatable
+class IScene : public IUpdatable, public IInputListener
 {
 public:
 	virtual void Render(std::vector<const sf::Drawable*>& queue) = 0;
