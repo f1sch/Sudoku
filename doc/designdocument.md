@@ -1,16 +1,16 @@
 # Sudoku
 
 ## Systeme in der Reihenfolge der Implementierung
-1. GameManager - Erstellt und verbindet alle Systeme
-2. Game Loop - orchestriert einen Frame (Input -> Logik -> Render). Keine Entscheidungsgewalt
-5. SceneManager - verwaltet die aktive Szene
-3. AssetManager - lädt und cached alle Texturen einmal beim Start
-4. Renderer - flusht die RenderQueue jedes Frame (reine Darstellung)
-6. GridSystem - definiert Bildschirmkoordinaten für Zellen
-7. Board - Daten und Spiellogik
-8. InputSystem - verarbeitet Maus und Tastatur
-9. SudokuGenerator - generiert ein gültiges Puzzle
-10. SudokuSolver - löst ein Brett, Werkzeug des Generators (und des Auto-Complete)
+- [x] GameManager - Erstellt und verbindet alle Systeme
+- [x] Game Loop - orchestriert einen Frame (Input -> Logik -> Render). Keine Entscheidungsgewalt
+- [x] SceneManager - verwaltet die aktive Szene
+- [x] AssetManager - lädt und cached alle Texturen einmal beim Start
+- [x] Renderer - flusht die RenderQueue jedes Frame (reine Darstellung)
+- [x] GridSystem - definiert Bildschirmkoordinaten für Zellen
+- [x] Board - Daten und Spiellogik
+- [x] InputSystem - verarbeitet Maus und Tastatur
+- [ ] SudokuGenerator - generiert ein gültiges Puzzle
+- [ ] SudokuSolver - löst ein Brett, Werkzeug des Generators (und des Auto-Complete)
 
 ## Ablauf eines Frames
 1. Input

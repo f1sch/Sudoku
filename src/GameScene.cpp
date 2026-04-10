@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 GameScene::GameScene(AssetManager& am, GridSystem& gs)
 	: m_gridSystem(gs)
@@ -148,6 +149,9 @@ void GameScene::OnKeyPressed(sf::Keyboard::Key key)
 		m_cursorCol = std::clamp(m_cursorCol - 1, 0, 8);
 	if (key == sf::Keyboard::Key::Right)
 		m_cursorCol = std::clamp(m_cursorCol + 1, 0, 8);
+
+	if (m_board->IsSolved())
+		std::cout << "Game won!" << std::endl;
 }
 
 void GameScene::RebuildNumberSprites()
