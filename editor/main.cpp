@@ -251,6 +251,9 @@ static void drawViewportRuler(ImDrawList* dl, ImVec2 imageOrigin)
 
 static void drawTexturePanel(const std::vector<std::string>& textures, int& selectedTexIdx)
 {
+    ImGui::SetNextWindowPos({ 0.f, 20.f }, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({ 180.f, 300.f }, ImGuiCond_FirstUseEver);
+
     ImGui::Begin("Textures");
     ImGui::Text("Assets/");
     ImGui::Separator();
@@ -269,6 +272,9 @@ static void drawTexturePanel(const std::vector<std::string>& textures, int& sele
 
 static void drawScenePanel(SpriteList& sprites, int& selectedSpriteIdx)
 {
+    ImGui::SetNextWindowPos({ 0.f, 320.f }, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({ 180.f, 490.f }, ImGuiCond_FirstUseEver);
+
     ImGui::Begin("Scene");
     ImGui::Text("Sprites (%zu)", sprites.size());
     ImGui::Separator();
@@ -296,6 +302,11 @@ static void drawScenePanel(SpriteList& sprites, int& selectedSpriteIdx)
 
 static void drawPropertiesPanel(SpriteList& sprites, int selectedSpriteIdx)
 {
+    ImGui::SetNextWindowPos({ 825.f, 20.f },
+        ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({ 485.f, 300.f },
+        ImGuiCond_FirstUseEver);
+
     ImGui::Begin("Properties");
 
     if (selectedSpriteIdx < 0 || selectedSpriteIdx >= static_cast<int>(sprites.size())) 
@@ -332,6 +343,11 @@ static void drawPropertiesPanel(SpriteList& sprites, int selectedSpriteIdx)
 static void drawModeToolbar(EditorMode& mode, bool& snapEnabled, int selectedTexIdx,
     const std::vector<std::string>& textures)
 {
+    ImGui::SetNextWindowPos({ 180.f, 20.f },
+        ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({ 645.f, 125.f },
+        ImGuiCond_FirstUseEver);
+
     ImGui::Begin("Tools");
 
     bool placeActive = (mode == EditorMode::Place);
@@ -380,13 +396,9 @@ struct ViewportResult
 
 static ViewportResult drawViewportPanel(const sf::RenderTexture& rt)
 {
+    ImGui::SetNextWindowPos({ 180.f, 145.f }, ImGuiCond_FirstUseEver);
+    
     ViewportResult result;
-
-    const float windowWidth = static_cast<float>(VIRTUAL_WIDTH) + RULER_SIZE + 16.f;
-    const float windowHeight = static_cast<float>(VIRTUAL_HEIGHT) + RULER_SIZE + 36.f;
-
-    ImGui::SetNextWindowSize(ImVec2(windowWidth, windowHeight),ImGuiCond_Always);
-
     ImGui::Begin("Viewport", nullptr,
         ImGuiWindowFlags_NoResize | 
         ImGuiWindowFlags_NoScrollbar |
@@ -401,9 +413,9 @@ static ViewportResult drawViewportPanel(const sf::RenderTexture& rt)
     drawViewportRuler(ImGui::GetWindowDrawList(), imageOrigin);
 
     auto toWorld = [&](ImVec2 mouse) -> sf::Vector2f 
-        { 
-            return { mouse.x - imageOrigin.x, mouse.y - imageOrigin.y }; 
-        };
+    { 
+        return { mouse.x - imageOrigin.x, mouse.y - imageOrigin.y }; 
+    };
 
     if (ImGui::IsItemHovered())
     {
@@ -430,6 +442,11 @@ static ViewportResult drawViewportPanel(const sf::RenderTexture& rt)
 
 static bool drawTilemapPanel(TilemapAsset& tm, int& selCol, int& selRow)
 {
+    ImGui::SetNextWindowPos({ 825.f, 320.f },
+        ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({ 480.f, 490.f },
+        ImGuiCond_FirstUseEver);
+
     bool changed = false;
     ImGui::Begin("Tilemap");
 
@@ -498,8 +515,52 @@ static bool drawTilemapPanel(TilemapAsset& tm, int& selCol, int& selRow)
     return changed;
 }
 
+static std::string drawFileDialog(const char* modalId, char* buf, size_t bufSize,
+    const char* actionLabel, const std::string& error)
+{
+    std::string result;
+
+    if (ImGui::BeginPopupModal(modalId, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("filename:");
+        ImGui::SetNextItemWidth(300.f);
+        // Enter im Inputfeld = bestätigen
+        bool confirmed = ImGui::InputText("##filename", buf, bufSize,
+            ImGuiInputTextFlags_EnterReturnsTrue);
+        ImGui::Spacing();
+
+        if (!error.empty())
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.3f, 0.3f, 1.f));
+            ImGui::TextUnformatted(error.c_str());
+            ImGui::PopStyleColor();
+            ImGui::Spacing();
+        }
+
+        if (ImGui::Button(actionLabel, ImVec2(120, 0)) || confirmed)
+        {
+            result = buf;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0)))
+            ImGui::CloseCurrentPopup();
+
+        ImGui::EndPopup();
+    }
+    return result;
+}
+
 int main()
 {
+    enum class FileDialogMode { None, Export, Import };
+    FileDialogMode fileDialogMode = FileDialogMode::None;
+    static char fileNameBuf[256] = "scene.json";
+    std::string fileDialogError;
+    bool openNewSceneDialog = false;
+    bool openExportDialog = false;
+    bool openImportDialog = false;
+
     sf::RenderWindow window(
         sf::VideoMode({ EDITOR_WIDTH, EDITOR_HEIGHT }),
         "Sudoku Editor",
@@ -508,8 +569,12 @@ int main()
     window.setFramerateLimit(60);
     if (!ImGui::SFML::Init(window)) 
     {
-        // TODO: error
+        //window.close();
+        return -1;
     }
+    //ImGuiContext* ctx = ImGui::GetCurrentContext();
+    //printf("Context: %p\n", (void*)ctx);
+    //IM_ASSERT(ImGui::GetCurrentContext() != nullptr);
 
     sf::RenderTexture sceneRT;
     if (!sceneRT.resize({ VIRTUAL_WIDTH, VIRTUAL_HEIGHT }))
@@ -523,6 +588,7 @@ int main()
     SpriteList sprites;
     EditorMode mode = EditorMode::Move;
     bool snapEnabled = true;
+    bool wasDragging = false;
     int  selectedTexIdx = -1;
     int  selectedSpriteIdx = -1;
 
@@ -551,8 +617,6 @@ int main()
                 }
             }
         }
-        // ImGui Update
-        ImGui::SFML::Update(window, deltaClock.restart());
 
         sceneRT.clear(sf::Color(20, 20, 20));
         drawViewportGrid(sceneRT);
@@ -576,19 +640,25 @@ int main()
 
         sceneRT.display();
 
+        // ImGui Update
+        ImGui::SFML::Update(window, deltaClock.restart());
+        //IM_ASSERT(ImGui::GetCurrentContext() != nullptr);
         if (ImGui::BeginMainMenuBar()) 
         {
             if (ImGui::BeginMenu("File")) 
             {
-                // TODO: add portable-file-dialogs to select scene-file
-                if (ImGui::MenuItem("Export Scene")) { exportScene(sprites, "scene.json"); }
+                if (ImGui::MenuItem("New Scene"))
+                    openNewSceneDialog = true;
+
+                if (ImGui::MenuItem("Export Scene")) 
+                {
+                    openExportDialog = true;
+                    fileDialogError.clear();
+                }
                 if (ImGui::MenuItem("Load Scene")) 
                 { 
-                    if (!importScene(sprites, "scene.json"))
-                    {
-                        // TODO: add error handling
-                    }
-                    selectedSpriteIdx = -1;
+                    openImportDialog = true;
+                    fileDialogError.clear();
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit")) window.close();
@@ -602,6 +672,34 @@ int main()
             }
             ImGui::EndMainMenuBar();
         }
+
+        if (openNewSceneDialog)
+        {
+            ImGui::OpenPopup("##newSceneDialog");
+            openNewSceneDialog = false;
+        }
+
+        if (ImGui::BeginPopupModal("##newSceneDialog", nullptr,
+            ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text("Discard current scene?");
+            ImGui::Spacing();
+            if (ImGui::Button("Yes", ImVec2(100, 0)))
+            {
+                sprites.clear();
+                selectedSpriteIdx = selectedTexIdx = tmSelCol = tmSelRow = -1;
+                mode = EditorMode::Move;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(100, 0)))
+                ImGui::CloseCurrentPopup();
+
+            ImGui::EndPopup();
+        }
+
+        if (openExportDialog) { ImGui::OpenPopup("##exportDialog"); openExportDialog = false; }
+        if (openImportDialog) { ImGui::OpenPopup("##importDialog"); openImportDialog = false; }
 
         drawModeToolbar(mode, snapEnabled, selectedTexIdx, textures);
         drawTexturePanel(textures, selectedTexIdx);
@@ -632,36 +730,60 @@ int main()
                     textures[selectedTexIdx], pos.x, pos.y));
                 selectedSpriteIdx = static_cast<int>(sprites.size()) - 1;
             }
-            else if (mode == EditorMode::Move)
+        }
+        else if (vp.clicked && mode == EditorMode::Move)
+        {
+            selectedSpriteIdx = -1;
+            for (int i = static_cast<int>(sprites.size()) - 1; i >= 0; --i)
             {
-                selectedSpriteIdx = -1;
-                for (int i = static_cast<int>(sprites.size()) - 1; i >= 0; --i) 
+                if (sprites[i]->sprite.getGlobalBounds().contains(vp.worldPos))
                 {
-                    if (sprites[i]->sprite.getGlobalBounds().contains(vp.worldPos)) 
-                    {
-                        selectedSpriteIdx = i;
-                        break;
-                    }
+                    selectedSpriteIdx = i;
+                    break;
                 }
             }
         }
 
-        if (vp.dragging && mode == EditorMode::Move && selectedSpriteIdx >= 0)
+        else if (vp.dragging && mode == EditorMode::Move && selectedSpriteIdx >= 0)
         {
             auto& s = *sprites[selectedSpriteIdx];
             s.x += vp.dragDelta.x;
             s.y += vp.dragDelta.y;
-
             s.sprite.setPosition({ s.x, s.y });
+            wasDragging = true;
         }
-        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && snapEnabled && selectedSpriteIdx >= 0)
+
+        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && snapEnabled 
+            && selectedSpriteIdx >= 0 && wasDragging)
         {
             auto& s = *sprites[selectedSpriteIdx];
             sf::Vector2f snapped = snapToGrid({ s.x, s.y });
             s.x = snapped.x;
             s.y = snapped.y;
-
             s.sprite.setPosition({ s.x, s.y });
+            wasDragging = false;
+        }
+
+        // Export Dialog
+        std::string exportFile = drawFileDialog("##exportDialog", fileNameBuf,
+            sizeof(fileNameBuf), "Export", fileDialogError);
+        if (!exportFile.empty())
+        {
+            exportScene(sprites, exportFile);
+        }
+
+        // Import Dialog
+        std::string importFile = drawFileDialog("##importDialog", fileNameBuf,
+            sizeof(fileNameBuf), "Load", fileDialogError);
+        if (!importFile.empty())
+        {
+            if (!importScene(sprites, importFile))
+                fileDialogError = "file not found or invalid format: " + importFile;
+            else
+            {
+                selectedSpriteIdx = -1;
+                fileDialogError.clear();
+            }
         }
 
         // main window

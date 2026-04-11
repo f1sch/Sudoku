@@ -27,7 +27,7 @@
 GameScene::GameScene(AssetManager& am, GridSystem& gs)
 	: m_gridSystem(gs)
 {
-	LoadSceneFrom("scene.json");
+	LoadSceneFrom("GameScene.json");
 	m_board = std::make_unique<Board>();
 	
 	m_numbersTex = &am.Get(AssetManager::TextureID::Number);
