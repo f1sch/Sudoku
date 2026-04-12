@@ -1,26 +1,245 @@
 #include "GameScene.h"
 
 #include "AssetManager.h"
+#include "Board.h"
+#include "GridSystem.h"
+#include "SceneManager.h"
+#include "SudokuBoards.h"
 
+#include <shared/Data.h>
+
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Drawable.hpp>
+#include <SFML/Graphics/Rect.hpp>
+#include <SFML/Graphics/RectangleShape.hpp>
+#include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics/Text.hpp>
+#include <SFML/Graphics/Texture.hpp>
+#include <SFML/System/Vector2.hpp>
+#include <SFML/Window/Event.hpp>
+#include <SFML/Window/Keyboard.hpp>
 
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <random>
+#include <string>
+#include <utility>
+#include <variant>
 #include <vector>
 
-GameScene::GameScene(AssetManager& am)
-	: m_testSprite(am.Get(AssetManager::TextureID::Board))
+GameScene::GameScene(AssetManager& am, GridSystem& gs, SceneManager& sm)
+	: m_assetManager(am), m_gridSystem(gs), m_sceneManager(sm), m_overlayObjects{}
+{
+	loadSceneFrom("GameScene.json");
+	
+	std::random_device rd;
+	m_rng = std::mt19937(rd());
+	std::uniform_int_distribution<> dist(1, SUDOKUS.size() - 1); // 0 is for quick testing
+	int idx = dist(m_rng);
+	m_board = std::make_unique<Board>(SUDOKUS[idx]);
+	
+	m_numbersTex = &am.findTexture(AssetManager::TextureID::Number);
+	rebuildNumberSprites();
+	
+	m_cursor.setPosition(gs.tileToWorld(m_cursorCol, m_cursorRow));
+	m_cursor.setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
+	m_cursor.setFillColor(sf::Color::Transparent);
+	m_cursor.setOutlineColor(sf::Color::Green);
+	m_cursor.setOutlineThickness(2.f);
+
+	if (!m_font.openFromFile("assets/fonts/arial.ttf"))
+	{
+		std::cerr << "Failed to load font" << std::endl;
+	}
+}
+
+void GameScene::update()
+{
+	m_cursor.setPosition(m_gridSystem.tileToWorld(m_cursorCol, m_cursorRow));
+}
+
+void GameScene::render()
 {
 }
 
-void GameScene::Update()
+void GameScene::render(std::vector<const sf::Drawable*>& queue)
+{
+	// Board
+	for (const auto& sprite : m_sprites)
+	{
+		queue.push_back(&sprite->sprite);
+	}
+	
+	// Numbers in Cells
+	for (const auto& number : m_numbersInCells)
+	{
+		queue.push_back(&number);
+	}
+	
+	// Player cursor
+	queue.push_back(&m_cursor);
+	
+	// UI-Overlay
+	for (const auto& obj : m_overlayObjects)
+	{
+		std::visit([&](const auto& drawable)
+			{
+				queue.push_back(&drawable);
+			}, obj.obj);
+	}
+}
+
+void GameScene::processEvent(const sf::Event& event)
 {
 }
 
-void GameScene::Render()
+void GameScene::loadSceneFrom(const std::string& file)
 {
+	std::ifstream in(file);
+	nlohmann::json scene;
+	in >> scene;
+
+	m_sprites.clear();
+	if (!scene.contains("sprites")) return;
+
+	for (const auto& s : scene["sprites"])
+	{
+		auto ls = std::make_unique<LoadedSprite>();
+
+		std::string path = s["texturePath"].get<std::string>();
+		if (!ls->texture.loadFromFile(path))
+			continue;
+
+		ls->sprite.setTexture(ls->texture, true);
+
+		bool fromTilemap = s.value("fromTilemap", false);
+		if (fromTilemap && s.contains("textureRect"))
+		{
+			const auto& r = s["textureRect"];
+			ls->sprite.setTextureRect(sf::IntRect(
+				{ r["left"].get<int>(), r["top"].get<int>() },
+				{ r["width"].get<int>(), r["height"].get<int>() }
+			));
+		}
+
+		float x = s.value("x", 0.f);
+		float y = s.value("y", 0.f);
+		float scaleX = s.value("scaleX", 1.f);
+		float scaleY = s.value("scaleY", 1.f);
+
+		ls->sprite.setPosition({ x, y });
+		ls->sprite.setScale({ scaleX, scaleY });
+		ls->layer = s.value("layer", 0);
+		
+		m_sprites.push_back(std::move(ls));
+	}
+	std::sort(m_sprites.begin(), m_sprites.end(), [](const auto& a, const auto& b) 
+		{ return a->layer < b->layer; }
+	);
 }
 
-void GameScene::Render(std::vector<const sf::Drawable*>& queue)
+void GameScene::onKeyPressed(sf::Keyboard::Key key)
 {
-	// Submit RenderObjects to RenderQueue
-	queue.push_back(&m_testSprite);
+	if (!m_overlayObjects.empty())
+	{
+		if (key == sf::Keyboard::Key::R)
+		{
+			m_sceneManager.requestSceneChange(
+				std::make_unique<GameScene>(m_assetManager, m_gridSystem, m_sceneManager));
+		}
+		return;
+	}
+
+	static const std::map<sf::Keyboard::Key, int> keyToNumber = {
+		{ sf::Keyboard::Key::Delete, 0},
+		{ sf::Keyboard::Key::Num1, 1},
+		{ sf::Keyboard::Key::Num2, 2},
+		{ sf::Keyboard::Key::Num3, 3},
+		{ sf::Keyboard::Key::Num4, 4},
+		{ sf::Keyboard::Key::Num5, 5},
+		{ sf::Keyboard::Key::Num6, 6},
+		{ sf::Keyboard::Key::Num7, 7},
+		{ sf::Keyboard::Key::Num8, 8},
+		{ sf::Keyboard::Key::Num9, 9},
+		{ sf::Keyboard::Key::Numpad1, 1},
+		{ sf::Keyboard::Key::Numpad2, 2},
+		{ sf::Keyboard::Key::Numpad3, 3},
+		{ sf::Keyboard::Key::Numpad4, 4},
+		{ sf::Keyboard::Key::Numpad5, 5},
+		{ sf::Keyboard::Key::Numpad6, 6},
+		{ sf::Keyboard::Key::Numpad7, 7},
+		{ sf::Keyboard::Key::Numpad8, 8},
+		{ sf::Keyboard::Key::Numpad9, 9},
+	};
+
+	if (auto it = keyToNumber.find(key); it != keyToNumber.end())
+	{
+		m_board->setCell(m_cursorRow, m_cursorCol, it->second);
+		rebuildNumberSprites();
+	}
+	if (key == sf::Keyboard::Key::Up)
+		m_cursorRow = std::clamp(m_cursorRow - 1, 0, 8);
+	if (key == sf::Keyboard::Key::Down)
+		m_cursorRow = std::clamp(m_cursorRow + 1, 0, 8);
+	if (key == sf::Keyboard::Key::Left)
+		m_cursorCol = std::clamp(m_cursorCol - 1, 0, 8);
+	if (key == sf::Keyboard::Key::Right)
+		m_cursorCol = std::clamp(m_cursorCol + 1, 0, 8);
+
+	if (m_board->isSolved())
+	{
+		std::cout << "Game won!" << std::endl;
+		pushSolvedOverlay();
+	}
+}
+
+void GameScene::rebuildNumberSprites()
+{
+	m_numbersInCells.clear();
+	for (int r = 0; r < 9; ++r)
+	{
+		for (int c = 0; c < 9; ++c)
+		{
+			auto number = m_board->getCell(r, c).number;
+			if (number == 0) continue;
+			sf::Sprite s(*m_numbersTex);
+			int index = number - 1;
+			int texCol = index % 3;
+			int texRow = index / 3;
+			s.setTextureRect(sf::IntRect({ texCol * 32, texRow * 32 }, { 32,32 }));
+			s.setPosition(m_gridSystem.tileToWorld(c, r));
+			if (m_board->getCell(r, c).canEdit)
+				s.setColor(sf::Color::Blue);
+			else
+				s.setColor(sf::Color::Black);
+			m_numbersInCells.push_back(s);
+		}
+	}
+}
+
+void GameScene::pushSolvedOverlay()
+{
+	sf::RectangleShape overlay;
+	overlay.setSize({ VIRTUAL_WIDTH, VIRTUAL_HEIGHT });
+	overlay.setFillColor(sf::Color(0, 0, 0, 150));
+
+	m_overlayObjects.push_back(RenderObject{
+		overlay,
+		RenderLayer::Overlay
+	});
+	
+	sf::Text text(m_font, "Sudoku solved!\nPress 'R' to restart", 48);
+	text.setFillColor(sf::Color::White);
+	text.setOrigin(text.getGlobalBounds().size / 2.f + text.getLocalBounds().position);
+	text.setPosition(overlay.getPosition() + (overlay.getSize() / 2.f));
+
+	m_overlayObjects.push_back(RenderObject{
+		text,
+		RenderLayer::Overlay
+	});
 }

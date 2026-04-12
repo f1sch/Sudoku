@@ -7,13 +7,12 @@
 class AssetManager
 {
 public:
-	// Cell2, Cell3, Cell4, Cell5, Cell6, Cell7, Cell8, Cell9
-	enum class TextureID { CellEmpty, Board };
+	enum class TextureID { CellEmpty, Board, Number };
 
 	AssetManager();
 
-	void Load(TextureID id, const std::string& filePath);
-	const sf::Texture& Get(TextureID id);
+	void load(TextureID id, const std::string& filePath);
+	const sf::Texture& findTexture(TextureID id);
 private:
 	std::map<TextureID, sf::Texture> m_textures;
 };

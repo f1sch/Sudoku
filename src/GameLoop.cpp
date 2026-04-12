@@ -10,21 +10,23 @@ GameLoop::GameLoop(IUpdatable* updatable, bool* running, sf::RenderWindow& windo
 {
 }
 
-void GameLoop::Run()
+void GameLoop::run()
 {
 	while (m_window.isOpen() && m_running)
 	{
-		Input();
-		m_updatable->Update();
-		m_updatable->Render();
+		input();
+		m_updatable->update();
+		m_updatable->render();
 	}
 }
 
-void GameLoop::Input()
+void GameLoop::input()
 {
 	while (const std::optional event = m_window.pollEvent())
 	{
 		if (event->is<sf::Event::Closed>())
 			m_window.close();
+		else
+			m_updatable->processEvent(event.value());
 	}
 }

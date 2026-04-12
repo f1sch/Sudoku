@@ -8,9 +8,9 @@ class GameLoop
 public:
 	GameLoop(IUpdatable* updatable, bool* running, sf::RenderWindow& window);
 
-	void Run();
+	void run();
 private:
-	void Input();
+	void input();
 
 	IUpdatable* m_updatable;
 	bool& m_running;

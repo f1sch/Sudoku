@@ -1,33 +1,53 @@
 #include "SceneManager.h"
 
-#include "GameScene.h"
-
 #include <SFML/Graphics/Drawable.hpp>
+#include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
 #include <memory>
+#include <utility>
 #include <vector>
 
-SceneManager::SceneManager(AssetManager& am)
-{
-	m_scene = std::make_unique<GameScene>(am);
-}
-
-void SceneManager::OnKeyPressed(sf::Keyboard::Key key)
+SceneManager::SceneManager(AssetManager& am, GridSystem& gs)
 {
 }
 
-void SceneManager::Update()
+void SceneManager::requestSceneChange(std::unique_ptr<IScene> next)
 {
-	m_scene->Update();
+	m_nextScene = std::move(next);
 }
 
-void SceneManager::Render()
+void SceneManager::onKeyPressed(sf::Keyboard::Key key)
+{
+	m_currentScene->onKeyPressed(key);
+}
+
+void SceneManager::update()
+{
+	if (m_nextScene)
+	{
+		if (m_currentScene) m_currentScene->onExit();
+		m_currentScene = std::move(m_nextScene);
+		m_currentScene->onEnter();
+	}
+
+	if (m_currentScene)
+		m_currentScene->update();
+}
+
+void SceneManager::render()
 {
 }
 
-void SceneManager::Render(std::vector<const sf::Drawable*>& queue)
+void SceneManager::render(std::vector<const sf::Drawable*>& queue)
 {
 	// Fill RenderQueue with Objects
-	m_scene->Render(queue);
+	if (m_currentScene)
+		m_currentScene->render(queue);
+}
+
+void SceneManager::processEvent(const sf::Event& event)
+{
+	if (m_currentScene)
+		m_currentScene->processEvent(event);
 }
