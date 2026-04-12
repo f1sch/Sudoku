@@ -26,11 +26,11 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <random>
 #include <string>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <random>
 
 GameScene::GameScene(AssetManager& am, GridSystem& gs, SceneManager& sm)
 	: m_assetManager(am), m_gridSystem(gs), m_sceneManager(sm), m_overlayObjects{}
@@ -39,7 +39,7 @@ GameScene::GameScene(AssetManager& am, GridSystem& gs, SceneManager& sm)
 	
 	std::random_device rd;
 	m_rng = std::mt19937(rd());
-	std::uniform_int_distribution<> dist(1, SUDOKUS.size() - 1);
+	std::uniform_int_distribution<> dist(1, SUDOKUS.size() - 1); // 0 is for quick testing
 	int idx = dist(m_rng);
 	m_board = std::make_unique<Board>(SUDOKUS[idx]);
 	
