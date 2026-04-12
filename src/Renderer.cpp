@@ -18,10 +18,10 @@ Renderer::Renderer()
 
 	m_window.setView(m_view);
 
-	HandleResize(m_window.getSize().x, m_window.getSize().y);
+	handleResize(m_window.getSize().x, m_window.getSize().y);
 }
 
-const void Renderer::Flush()
+const void Renderer::flush()
 {
 	m_window.clear(sf::Color::White);
 	for (const auto* obj : m_queue)
@@ -32,7 +32,7 @@ const void Renderer::Flush()
 	m_queue.clear();
 }
 
-void Renderer::HandleResize(unsigned windowWidth, unsigned windowHeight)
+void Renderer::handleResize(unsigned windowWidth, unsigned windowHeight)
 {
 	float windowRatio = static_cast<float>(windowWidth) / windowHeight;
 	float viewRatio = static_cast<float>(VIRTUAL_WIDTH) / VIRTUAL_HEIGHT;

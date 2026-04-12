@@ -11,8 +11,8 @@ public:
 
 	AssetManager();
 
-	void Load(TextureID id, const std::string& filePath);
-	const sf::Texture& Get(TextureID id);
+	void load(TextureID id, const std::string& filePath);
+	const sf::Texture& findTexture(TextureID id);
 private:
 	std::map<TextureID, sf::Texture> m_textures;
 };

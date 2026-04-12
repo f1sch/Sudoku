@@ -10,7 +10,7 @@ AssetManager::AssetManager()
 {
 }
 
-void AssetManager::Load(TextureID id, const std::string& filePath)
+void AssetManager::load(TextureID id, const std::string& filePath)
 {
 	sf::Texture tex;
 	if (!tex.loadFromFile(filePath))
@@ -21,7 +21,7 @@ void AssetManager::Load(TextureID id, const std::string& filePath)
 	m_textures.insert({ id, tex });
 }
 
-const sf::Texture& AssetManager::Get(TextureID id)
+const sf::Texture& AssetManager::findTexture(TextureID id)
 {
 	assert(m_textures.find(id) != m_textures.end() && "Texture not loaded");
 

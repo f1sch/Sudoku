@@ -10,7 +10,7 @@
 class IScene : public IUpdatable, public IInputListener
 {
 public:
-	virtual void Render(std::vector<const sf::Drawable*>& queue) = 0;
-	virtual void LoadSceneFrom(const std::string& file) {};
+	virtual void render(std::vector<const sf::Drawable*>& queue) = 0;
+	virtual void loadSceneFrom(const std::string& file) {};
 	virtual ~IScene() = default;
 };

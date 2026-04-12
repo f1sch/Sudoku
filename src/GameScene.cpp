@@ -29,11 +29,11 @@
 GameScene::GameScene(AssetManager& am, GridSystem& gs)
 	: m_gridSystem(gs)
 {
-	LoadSceneFrom("GameScene.json");
+	loadSceneFrom("GameScene.json");
 	m_board = std::make_unique<Board>();
 	
-	m_numbersTex = &am.Get(AssetManager::TextureID::Number);
-	RebuildNumberSprites();
+	m_numbersTex = &am.findTexture(AssetManager::TextureID::Number);
+	rebuildNumberSprites();
 	
 	m_cursor.setPosition(gs.tileToWorld(m_cursorCol, m_cursorRow));
 	m_cursor.setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
@@ -42,16 +42,16 @@ GameScene::GameScene(AssetManager& am, GridSystem& gs)
 	m_cursor.setOutlineThickness(2.f);
 }
 
-void GameScene::Update()
+void GameScene::update()
 {
 	m_cursor.setPosition(m_gridSystem.tileToWorld(m_cursorCol, m_cursorRow));
 }
 
-void GameScene::Render()
+void GameScene::render()
 {
 }
 
-void GameScene::Render(std::vector<const sf::Drawable*>& queue)
+void GameScene::render(std::vector<const sf::Drawable*>& queue)
 {
 	// Submit RenderObjects to RenderQueue
 	for (const auto& sprite : m_sprites)
@@ -65,11 +65,11 @@ void GameScene::Render(std::vector<const sf::Drawable*>& queue)
 	queue.push_back(&m_cursor);
 }
 
-void GameScene::ProcessEvent(const sf::Event& event)
+void GameScene::processEvent(const sf::Event& event)
 {
 }
 
-void GameScene::LoadSceneFrom(const std::string& file)
+void GameScene::loadSceneFrom(const std::string& file)
 {
 	std::ifstream in(file);
 	nlohmann::json scene;
@@ -114,7 +114,7 @@ void GameScene::LoadSceneFrom(const std::string& file)
 	);
 }
 
-void GameScene::OnKeyPressed(sf::Keyboard::Key key)
+void GameScene::onKeyPressed(sf::Keyboard::Key key)
 {
 	static const std::map<sf::Keyboard::Key, int> keyToNumber = {
 		{ sf::Keyboard::Key::Delete, 0},
@@ -140,8 +140,8 @@ void GameScene::OnKeyPressed(sf::Keyboard::Key key)
 
 	if (auto it = keyToNumber.find(key); it != keyToNumber.end())
 	{
-		m_board->SetCell(m_cursorRow, m_cursorCol, it->second);
-		RebuildNumberSprites();
+		m_board->setCell(m_cursorRow, m_cursorCol, it->second);
+		rebuildNumberSprites();
 	}
 	if (key == sf::Keyboard::Key::Up)
 		m_cursorRow = std::clamp(m_cursorRow - 1, 0, 8);
@@ -152,18 +152,18 @@ void GameScene::OnKeyPressed(sf::Keyboard::Key key)
 	if (key == sf::Keyboard::Key::Right)
 		m_cursorCol = std::clamp(m_cursorCol + 1, 0, 8);
 
-	if (m_board->IsSolved())
+	if (m_board->isSolved())
 		std::cout << "Game won!" << std::endl;
 }
 
-void GameScene::RebuildNumberSprites()
+void GameScene::rebuildNumberSprites()
 {
 	m_numbersInCells.clear();
 	for (int r = 0; r < 9; ++r)
 	{
 		for (int c = 0; c < 9; ++c)
 		{
-			auto number = m_board->GetCell(r, c).number;
+			auto number = m_board->getCell(r, c).number;
 			if (number == 0) continue;
 			sf::Sprite s(*m_numbersTex);
 			int index = number - 1;
@@ -171,7 +171,7 @@ void GameScene::RebuildNumberSprites()
 			int texRow = index / 3;
 			s.setTextureRect(sf::IntRect({ texCol * 32, texRow * 32 }, { 32,32 }));
 			s.setPosition(m_gridSystem.tileToWorld(c, r));
-			if (m_board->GetCell(r, c).canEdit)
+			if (m_board->getCell(r, c).canEdit)
 				s.setColor(sf::Color::Blue);
 			else
 				s.setColor(sf::Color::Black);

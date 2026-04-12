@@ -33,14 +33,17 @@ class GameScene : public IScene
 public:
 	GameScene(AssetManager& am, GridSystem& gs);
 
-	void Update() override;
-	void Render() override;
-	void Render(std::vector<const sf::Drawable*>& queue) override;
-	void ProcessEvent(const sf::Event& event) override;
-	void LoadSceneFrom(const std::string& file) override;
-	void OnKeyPressed(sf::Keyboard::Key key) override;
+	void update() override;
+	void render() override;
+	void render(std::vector<const sf::Drawable*>& queue) override;
+	void processEvent(const sf::Event& event) override;
+	void loadSceneFrom(const std::string& file) override;
+	void onKeyPressed(sf::Keyboard::Key key) override;
+
 private:
-	void RebuildNumberSprites();
+	void rebuildNumberSprites();
+
+private:
 	GridSystem& m_gridSystem;
 	std::vector<std::unique_ptr<LoadedSprite>> m_sprites;
 	std::unique_ptr<Board> m_board;

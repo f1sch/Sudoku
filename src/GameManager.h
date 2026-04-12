@@ -20,12 +20,12 @@ public:
 	GameManager();
 	~GameManager();
 
-	void Run();
-	void OnKeyPressed(sf::Keyboard::Key key) override;
+	void run();
+	void onKeyPressed(sf::Keyboard::Key key) override;
 private:
-	void Update() override;
-	void Render() override;
-	void ProcessEvent(const sf::Event& event) override;
+	void update() override;
+	void render() override;
+	void processEvent(const sf::Event& event) override;
 
 	std::unique_ptr<GameLoop> m_gameLoop;
 	std::unique_ptr<SceneManager> m_sceneManager;

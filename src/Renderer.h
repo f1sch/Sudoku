@@ -10,15 +10,12 @@ class Renderer
 public:
 	Renderer();
 
-	const void Flush();
-	void HandleResize(unsigned windowWidth, unsigned windowHeight);
+	const void flush();
+	void handleResize(unsigned windowWidth, unsigned windowHeight);
 
-	std::vector<const sf::Drawable*>& GetQueue() { return m_queue; }
-	sf::RenderWindow& GetWindow() { return m_window; }
-
-private:
 	sf::RenderWindow m_window;
 	std::vector<const sf::Drawable*> m_queue;
 
+private:
 	sf::View m_view;
 };

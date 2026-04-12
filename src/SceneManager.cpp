@@ -14,27 +14,27 @@ SceneManager::SceneManager(AssetManager& am, GridSystem& gs)
 	m_scene = std::make_unique<GameScene>(am, gs);
 }
 
-void SceneManager::OnKeyPressed(sf::Keyboard::Key key)
+void SceneManager::onKeyPressed(sf::Keyboard::Key key)
 {
-	m_scene->OnKeyPressed(key);
+	m_scene->onKeyPressed(key);
 }
 
-void SceneManager::Update()
+void SceneManager::update()
 {
-	m_scene->Update();
+	m_scene->update();
 }
 
-void SceneManager::Render()
+void SceneManager::render()
 {
 }
 
-void SceneManager::Render(std::vector<const sf::Drawable*>& queue)
+void SceneManager::render(std::vector<const sf::Drawable*>& queue)
 {
 	// Fill RenderQueue with Objects
-	m_scene->Render(queue);
+	m_scene->render(queue);
 }
 
-void SceneManager::ProcessEvent(const sf::Event& event)
+void SceneManager::processEvent(const sf::Event& event)
 {
-	m_scene->ProcessEvent(event);
+	m_scene->processEvent(event);
 }

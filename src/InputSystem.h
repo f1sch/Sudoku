@@ -9,9 +9,9 @@
 class InputSystem
 {
 public:
-	void AddListener(IInputListener* listener);
-	void ProcessEvent(const sf::Event& event);
-	sf::Vector2f WindowToVirtual(sf::Vector2i mousePos,
+	void addListener(IInputListener* listener);
+	void processEvent(const sf::Event& event);
+	sf::Vector2f windowToVirtual(sf::Vector2i mousePos,
 		sf::Vector2f sceneOffset, float scale);
 
 private:

@@ -3,5 +3,5 @@
 int main()
 {
 	GameManager manager;
-	manager.Run();
+	manager.run();
 }

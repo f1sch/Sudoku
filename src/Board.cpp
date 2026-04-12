@@ -41,12 +41,12 @@ Board::Board()
 }
 
 
-Cell Board::GetCell(int row, int col) const
+Cell Board::getCell(int row, int col) const
 {
 	return m_cells[row][col];
 }
 
-void Board::SetCell(int row, int col, int num)
+void Board::setCell(int row, int col, int num)
 {
 	if (m_cells[row][col].canEdit)
 	{
@@ -54,7 +54,7 @@ void Board::SetCell(int row, int col, int num)
 	}
 }
 
-bool Board::IsSolved() const
+bool Board::isSolved() const
 {
 	std::vector<std::vector<bool>> rows(9, std::vector<bool>(9, false));
 	std::vector<std::vector<bool>> cols(9, std::vector<bool>(9, false));
