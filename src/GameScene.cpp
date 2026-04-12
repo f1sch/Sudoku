@@ -11,23 +11,26 @@
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Rect.hpp>
+#include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
+#include <SFML/Graphics/Text.hpp>
 
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include <iostream>
+#include <variant>
 
 GameScene::GameScene(AssetManager& am, GridSystem& gs)
-	: m_gridSystem(gs)
+	: m_gridSystem(gs), m_overlayObjects{}
 {
 	loadSceneFrom("GameScene.json");
 	m_board = std::make_unique<Board>();
@@ -40,6 +43,11 @@ GameScene::GameScene(AssetManager& am, GridSystem& gs)
 	m_cursor.setFillColor(sf::Color::Transparent);
 	m_cursor.setOutlineColor(sf::Color::Green);
 	m_cursor.setOutlineThickness(2.f);
+
+	if (!m_font.openFromFile("assets/fonts/arial.ttf"))
+	{
+		std::cerr << "Failed to load font" << std::endl;
+	}
 }
 
 void GameScene::update()
@@ -53,16 +61,29 @@ void GameScene::render()
 
 void GameScene::render(std::vector<const sf::Drawable*>& queue)
 {
-	// Submit RenderObjects to RenderQueue
+	// Board
 	for (const auto& sprite : m_sprites)
 	{
 		queue.push_back(&sprite->sprite);
 	}
+	
+	// Numbers in Cells
 	for (const auto& number : m_numbersInCells)
 	{
 		queue.push_back(&number);
 	}
+	
+	// Player cursor
 	queue.push_back(&m_cursor);
+	
+	// UI-Overlay
+	for (const auto& obj : m_overlayObjects)
+	{
+		std::visit([&](const auto& drawable)
+			{
+				queue.push_back(&drawable);
+			}, obj.obj);
+	}
 }
 
 void GameScene::processEvent(const sf::Event& event)
@@ -152,8 +173,11 @@ void GameScene::onKeyPressed(sf::Keyboard::Key key)
 	if (key == sf::Keyboard::Key::Right)
 		m_cursorCol = std::clamp(m_cursorCol + 1, 0, 8);
 
-	if (m_board->isSolved())
+	if (m_board->isSolved() && m_overlayObjects.empty())
+	{
 		std::cout << "Game won!" << std::endl;
+		pushSolvedOverlay();
+	}
 }
 
 void GameScene::rebuildNumberSprites()
@@ -178,4 +202,26 @@ void GameScene::rebuildNumberSprites()
 			m_numbersInCells.push_back(s);
 		}
 	}
+}
+
+void GameScene::pushSolvedOverlay()
+{
+	sf::RectangleShape overlay;
+	overlay.setSize({ VIRTUAL_WIDTH, VIRTUAL_HEIGHT });
+	overlay.setFillColor(sf::Color(0, 0, 0, 150));
+
+	m_overlayObjects.push_back(RenderObject{
+		overlay,
+		RenderLayer::Overlay
+	});
+	
+	sf::Text text(m_font, "Sudoku solved!", 48);
+	text.setFillColor(sf::Color::White);
+	text.setOrigin(text.getGlobalBounds().size / 2.f + text.getLocalBounds().position);
+	text.setPosition(overlay.getPosition() + (overlay.getSize() / 2.f));
+
+	m_overlayObjects.push_back(RenderObject{
+		text,
+		RenderLayer::Overlay
+	});
 }

@@ -6,13 +6,16 @@
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
+#include <SFML/Graphics/Font.hpp>
 
 #include <memory>
 #include <string>
 #include <vector>
+#include <variant>
 
 class AssetManager;
 class GridSystem;
@@ -26,6 +29,20 @@ struct LoadedSprite
 	LoadedSprite(const LoadedSprite&) = delete;
 	LoadedSprite& operator=(const LoadedSprite&) = delete;
 	LoadedSprite() = default;
+};
+
+enum class RenderLayer
+{
+	Background = 0,
+	Board = 1,
+	UI = 2,
+	Overlay = 3
+};
+
+struct RenderObject
+{
+	std::variant<sf::Text, sf::RectangleShape> obj;
+	RenderLayer layer;
 };
 
 class GameScene : public IScene
@@ -42,6 +59,7 @@ public:
 
 private:
 	void rebuildNumberSprites();
+	void pushSolvedOverlay();
 
 private:
 	GridSystem& m_gridSystem;
@@ -50,6 +68,9 @@ private:
 	std::vector<sf::Sprite> m_numbersInCells;
 	const sf::Texture* m_numbersTex = nullptr;
 	
+	std::vector<RenderObject> m_overlayObjects;
+	sf::Font m_font;
+
 	sf::RectangleShape m_cursor;
 	int m_cursorRow = 0;
 	int m_cursorCol = 0;
