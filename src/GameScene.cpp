@@ -3,6 +3,7 @@
 #include "AssetManager.h"
 #include "Board.h"
 #include "GridSystem.h"
+#include "SceneManager.h"
 
 #include <shared/Data.h>
 
@@ -13,11 +14,11 @@
 #include <SFML/Graphics/Rect.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
-#include <SFML/Graphics/Text.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -26,11 +27,11 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 #include <variant>
+#include <vector>
 
-GameScene::GameScene(AssetManager& am, GridSystem& gs)
-	: m_gridSystem(gs), m_overlayObjects{}
+GameScene::GameScene(AssetManager& am, GridSystem& gs, SceneManager& sm)
+	: m_assetManager(am), m_gridSystem(gs), m_sceneManager(sm), m_overlayObjects{}
 {
 	loadSceneFrom("GameScene.json");
 	m_board = std::make_unique<Board>();
@@ -137,6 +138,16 @@ void GameScene::loadSceneFrom(const std::string& file)
 
 void GameScene::onKeyPressed(sf::Keyboard::Key key)
 {
+	if (!m_overlayObjects.empty())
+	{
+		if (key == sf::Keyboard::Key::R)
+		{
+			m_sceneManager.requestSceneChange(
+				std::make_unique<GameScene>(m_assetManager, m_gridSystem, m_sceneManager));
+		}
+		return;
+	}
+
 	static const std::map<sf::Keyboard::Key, int> keyToNumber = {
 		{ sf::Keyboard::Key::Delete, 0},
 		{ sf::Keyboard::Key::Num1, 1},
@@ -173,7 +184,7 @@ void GameScene::onKeyPressed(sf::Keyboard::Key key)
 	if (key == sf::Keyboard::Key::Right)
 		m_cursorCol = std::clamp(m_cursorCol + 1, 0, 8);
 
-	if (m_board->isSolved() && m_overlayObjects.empty())
+	if (m_board->isSolved())
 	{
 		std::cout << "Game won!" << std::endl;
 		pushSolvedOverlay();
@@ -215,7 +226,7 @@ void GameScene::pushSolvedOverlay()
 		RenderLayer::Overlay
 	});
 	
-	sf::Text text(m_font, "Sudoku solved!", 48);
+	sf::Text text(m_font, "Sudoku solved!\nPress 'R' to restart", 48);
 	text.setFillColor(sf::Color::White);
 	text.setOrigin(text.getGlobalBounds().size / 2.f + text.getLocalBounds().position);
 	text.setPosition(overlay.getPosition() + (overlay.getSize() / 2.f));

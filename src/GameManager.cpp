@@ -5,6 +5,7 @@
 #include "AssetManager.h"
 #include "GameLoop.h"
 #include "GridSystem.h"
+#include "GameScene.h"
 #include "InputSystem.h"
 #include "Renderer.h"
 #include "SceneManager.h"
@@ -29,6 +30,8 @@ GameManager::GameManager()
 		TILE_SIZE, sf::Vector2f(static_cast<float>(BOARD_LEFT), static_cast<float>(BOARD_TOP)));
 
 	m_sceneManager = std::make_unique<SceneManager>(*m_assetManager, *m_gridSystem);
+	m_sceneManager->requestSceneChange(
+		std::make_unique<GameScene>(*m_assetManager, *m_gridSystem, *m_sceneManager));
 
 	m_inputSystem = std::make_unique<InputSystem>();
 	m_inputSystem->addListener(this);

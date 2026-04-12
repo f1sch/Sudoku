@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <variant>
+#include "SceneManager.h"
 
 class AssetManager;
 class GridSystem;
@@ -48,7 +49,7 @@ struct RenderObject
 class GameScene : public IScene
 {
 public:
-	GameScene(AssetManager& am, GridSystem& gs);
+	GameScene(AssetManager& am, GridSystem& gs, SceneManager& sm);
 
 	void update() override;
 	void render() override;
@@ -62,7 +63,10 @@ private:
 	void pushSolvedOverlay();
 
 private:
+	AssetManager& m_assetManager;
 	GridSystem& m_gridSystem;
+	SceneManager& m_sceneManager;
+
 	std::vector<std::unique_ptr<LoadedSprite>> m_sprites;
 	std::unique_ptr<Board> m_board;
 	std::vector<sf::Sprite> m_numbersInCells;
