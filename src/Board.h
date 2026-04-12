@@ -1,4 +1,6 @@
 #pragma once
+#include "SudokuBoards.h"
+
 #include <set>
 
 struct Cell
@@ -11,7 +13,7 @@ struct Cell
 class Board
 {
 public:
-	Board();
+	explicit Board(const Board9x9& sudoku);
 
 	Cell getCell(int row, int col) const;
 	void setCell(int row, int col, int num);

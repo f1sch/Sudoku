@@ -4,6 +4,7 @@
 #include "Board.h"
 #include "GridSystem.h"
 #include "SceneManager.h"
+#include "SudokuBoards.h"
 
 #include <shared/Data.h>
 
@@ -29,12 +30,18 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <random>
 
 GameScene::GameScene(AssetManager& am, GridSystem& gs, SceneManager& sm)
 	: m_assetManager(am), m_gridSystem(gs), m_sceneManager(sm), m_overlayObjects{}
 {
 	loadSceneFrom("GameScene.json");
-	m_board = std::make_unique<Board>();
+	
+	std::random_device rd;
+	m_rng = std::mt19937(rd());
+	std::uniform_int_distribution<> dist(1, SUDOKUS.size() - 1);
+	int idx = dist(m_rng);
+	m_board = std::make_unique<Board>(SUDOKUS[idx]);
 	
 	m_numbersTex = &am.findTexture(AssetManager::TextureID::Number);
 	rebuildNumberSprites();

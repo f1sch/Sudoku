@@ -4,15 +4,15 @@
 
 #include "AssetManager.h"
 #include "GameLoop.h"
-#include "GridSystem.h"
 #include "GameScene.h"
+#include "GridSystem.h"
 #include "InputSystem.h"
 #include "Renderer.h"
 #include "SceneManager.h"
 
+#include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
-#include <SFML/System/Vector2.hpp>
 
 #include <memory>
 

@@ -17,6 +17,7 @@
 #include <vector>
 #include <variant>
 #include "SceneManager.h"
+#include <random>
 
 class AssetManager;
 class GridSystem;
@@ -78,5 +79,7 @@ private:
 	sf::RectangleShape m_cursor;
 	int m_cursorRow = 0;
 	int m_cursorCol = 0;
+
+	std::mt19937 m_rng;
 };
 

@@ -1,41 +1,17 @@
 #include "Board.h"
+#include "SudokuBoards.h"
 
 #include <vector>
 
-Board::Board()
+Board::Board(const Board9x9& sudoku)
 {
-	// placeholder for testing
-	//int testBoard[9][9] = 
-	//{
-	//	{ 5, 3, 0, 0, 7, 0, 0, 0, 0 },
-	//	{ 6, 0, 0, 1, 9, 5, 0, 0, 0 },
-	//	{ 0, 9, 8, 0, 0, 0, 0, 6, 0 },
-	//	{ 8, 0, 0, 0, 6, 0, 0, 0, 3 },
-	//	{ 4, 0, 0, 8, 0, 3, 0, 0, 1 },
-	//	{ 7, 0, 0, 0, 2, 0, 0, 0, 6 },
-	//	{ 0, 6, 0, 0, 0, 0, 2, 8, 0 },
-	//	{ 0, 0, 0, 4, 1, 9, 0, 0, 5 },
-	//	{ 0, 0, 0, 0, 8, 0, 0, 7, 9 }
-	//};
-	int testBoard[9][9] = 
-	{
-		{ 0, 2, 3, 4, 5, 6, 7, 8, 9 },
-		{ 4, 5, 6, 7, 8, 9, 1, 2, 3 },
-		{ 7, 8, 9, 1, 2, 3, 4, 5, 6 },
-		{ 2, 3, 1, 6, 7, 4, 8, 9, 5 },
-		{ 8, 7, 5, 9, 1, 2, 3, 6, 4 },
-		{ 6, 9, 4, 5, 3, 8, 2, 1, 7 },
-		{ 3, 1, 7, 2, 6, 5, 9, 4, 8 },
-		{ 5, 4, 2, 8, 9, 7, 6, 3, 1 },
-		{ 9, 6, 8, 3, 4, 1, 5, 7, 2 }
-	};
 	for (int r = 0; r < 9; ++r)
 	{
 		for (int c = 0; c < 9; ++c)
 		{
-			m_cells[r][c].number = testBoard[r][c];
+			m_cells[r][c].number = sudoku[r][c];
 			m_cells[r][c].note.clear();
-			m_cells[r][c].canEdit = (testBoard[r][c] == 0);
+			m_cells[r][c].canEdit = (sudoku[r][c] == 0);
 		}
 	}
 }
