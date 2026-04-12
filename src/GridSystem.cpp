@@ -2,24 +2,24 @@
 
 #include <SFML/System/Vector2.hpp>
 
-GridSystem::GridSystem(int tileSize, sf::Vector2f gridOrigin)
+GridSystem::GridSystem(unsigned tileSize, sf::Vector2f gridOrigin)
 {
     m_tileSize = tileSize;
     m_gridOrigin = gridOrigin;
 }
 
-sf::Vector2f GridSystem::tileToWorld(int tileX, int tileY) const
+sf::Vector2f GridSystem::tileToWorld(int col, int row) const
 {
     return {
-        m_gridOrigin.x + tileX * m_tileSize,
-        m_gridOrigin.y + tileY * m_tileSize
+        m_gridOrigin.x + col * static_cast<float>(m_tileSize),
+        m_gridOrigin.y + row * static_cast<float>(m_tileSize)
     };
 }
 
-sf::Vector2f GridSystem::worldToTile(sf::Vector2f pos) const
+sf::Vector2i GridSystem::worldToTile(sf::Vector2f pos) const
 {
-    int x = (pos.x - m_gridOrigin.x) / m_tileSize;
-    int y = (pos.y - m_gridOrigin.y) / m_tileSize;
-
-    return { static_cast<float>(x), static_cast<float>(y) };
+    return {
+        static_cast<int>((pos.x - m_gridOrigin.x) / m_tileSize),
+        static_cast<int>((pos.y - m_gridOrigin.y) / m_tileSize)
+    };
 }

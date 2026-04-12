@@ -1,4 +1,4 @@
-# vcpkg-Toolchain deaktivieren falls sie injiziert wird
+# vcpkg-Toolchain does not work well with ImGui-SFML
 if(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg")
     message(STATUS "vcpkg toolchain detected and disabled")
     unset(CMAKE_TOOLCHAIN_FILE CACHE)

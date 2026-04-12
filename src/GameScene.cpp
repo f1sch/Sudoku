@@ -4,6 +4,8 @@
 #include "Board.h"
 #include "GridSystem.h"
 
+#include <shared/Data.h>
+
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SFML/Graphics/Color.hpp>
@@ -34,7 +36,7 @@ GameScene::GameScene(AssetManager& am, GridSystem& gs)
 	RebuildNumberSprites();
 	
 	m_cursor.setPosition(gs.tileToWorld(m_cursorCol, m_cursorRow));
-	m_cursor.setSize(sf::Vector2f(TEX_WIDTH, TEX_WIDTH));
+	m_cursor.setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
 	m_cursor.setFillColor(sf::Color::Transparent);
 	m_cursor.setOutlineColor(sf::Color::Green);
 	m_cursor.setOutlineThickness(2.f);

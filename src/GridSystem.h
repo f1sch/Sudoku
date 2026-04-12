@@ -1,17 +1,14 @@
 #pragma once
 #include <SFML/System/Vector2.hpp>
 
-auto constexpr TEX_WIDTH = 32;
-auto constexpr TEX_HEIGHT = 32;
-
 class GridSystem
 {
 public:
-	GridSystem(int tileSize, sf::Vector2f gridOrigin);
+	GridSystem(unsigned tileSize, sf::Vector2f gridOrigin);
 
-	sf::Vector2f tileToWorld(int tileX, int tileY) const;
-	sf::Vector2f worldToTile(sf::Vector2f pos) const;
+	sf::Vector2f tileToWorld(int col, int row) const;
+	sf::Vector2i worldToTile(sf::Vector2f pos) const;
 private:
-	int m_tileSize;
+	unsigned m_tileSize;
 	sf::Vector2f m_gridOrigin;
 };

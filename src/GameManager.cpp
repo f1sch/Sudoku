@@ -15,8 +15,6 @@
 
 #include <memory>
 
-//constexpr int TILE_SIZE = 32;
-
 GameManager::GameManager()
 	: m_running(true)
 {
@@ -28,7 +26,8 @@ GameManager::GameManager()
 	m_assetManager->Load(AssetManager::TextureID::Number, "assets/textures/numbersWhite.png");
 
 	// TODO: replace magic numbers
-	m_gridSystem = std::make_unique<GridSystem>(TILE_SIZE, sf::Vector2f(160.0f, 160.0f));
+	m_gridSystem = std::make_unique<GridSystem>(
+		TILE_SIZE, sf::Vector2f(static_cast<float>(BOARD_LEFT), static_cast<float>(BOARD_TOP)));
 
 	m_sceneManager = std::make_unique<SceneManager>(*m_assetManager, *m_gridSystem);
 
@@ -67,4 +66,9 @@ void GameManager::Render()
 void GameManager::ProcessEvent(const sf::Event& event)
 {
 	m_inputSystem->ProcessEvent(event);
+
+	if (const auto* resized = event.getIf<sf::Event::Resized>())
+	{
+		m_renderer->HandleResize(resized->size.x, resized->size.y);
+	}
 }
